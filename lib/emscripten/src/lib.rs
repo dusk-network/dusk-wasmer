@@ -491,7 +491,7 @@ impl EmscriptenFunctions {
 /// before calling this function, please initialize `Ctx::data` with a pointer
 /// to [`EmscriptenData`].
 pub fn set_up_emscripten(
-    ctx: &mut ContextMut<'_, EmEnv>,
+    ctx: &mut ContextMut<'_, EmEnv, ()>,
     instance: &mut Instance,
 ) -> Result<(), RuntimeError> {
     // ATINIT
@@ -515,7 +515,7 @@ pub fn set_up_emscripten(
 /// If you don't want to set it up yourself, consider using [`run_emscripten_instance`].
 pub fn emscripten_call_main(
     instance: &mut Instance,
-    mut ctx: ContextMut<'_, EmEnv>,
+    mut ctx: ContextMut<'_, EmEnv, ()>,
     path: &str,
     args: &[&str],
 ) -> Result<(), RuntimeError> {
@@ -563,13 +563,13 @@ pub fn emscripten_call_main(
 /// Top level function to execute emscripten
 pub fn run_emscripten_instance(
     instance: &mut Instance,
-    mut ctx: ContextMut<'_, EmEnv>,
+    mut ctx: ContextMut<'_, EmEnv, ()>,
     globals: &mut EmscriptenGlobals,
     path: &str,
     args: Vec<&str>,
     entrypoint: Option<String>,
 ) -> Result<(), RuntimeError> {
-    let env = &mut ctx.data_mut();
+    let env = &mut ctx.state_mut();
     env.set_memory(globals.memory.clone());
     // get emscripten export
     let mut emfuncs = EmscriptenFunctions::new();
@@ -794,7 +794,7 @@ pub fn run_emscripten_instance(
     if let Ok(func) = instance.exports.get_typed_function(&ctx, "setThrew") {
         emfuncs.set_threw = Some(func);
     }
-    ctx.data_mut().set_functions(emfuncs);
+    ctx.state_mut().set_functions(emfuncs);
 
     set_up_emscripten(&mut ctx.as_context_mut(), instance)?;
 
@@ -818,7 +818,7 @@ pub fn run_emscripten_instance(
     Ok(())
 }
 
-fn store_module_arguments(mut ctx: ContextMut<'_, EmEnv>, args: Vec<&str>) -> (u32, u32) {
+fn store_module_arguments(mut ctx: ContextMut<'_, EmEnv, ()>, args: Vec<&str>) -> (u32, u32) {
     let argc = args.len() + 1;
 
     let mut args_slice = vec![0; argc];
@@ -838,11 +838,11 @@ fn store_module_arguments(mut ctx: ContextMut<'_, EmEnv>, args: Vec<&str>) -> (u
 }
 
 pub fn emscripten_set_up_memory(
-    mut ctx: ContextMut<'_, EmEnv>,
+    mut ctx: ContextMut<'_, EmEnv, ()>,
     memory: &Memory,
     globals: &EmscriptenGlobalsData,
 ) -> Result<(), String> {
-    ctx.data_mut().set_memory(memory.clone());
+    ctx.state_mut().set_memory(memory.clone());
     let dynamictop_ptr = WasmPtr::<i32>::new(globals.dynamictop_ptr).deref(&ctx, memory);
     let dynamic_base = globals.dynamic_base;
 
@@ -880,7 +880,7 @@ pub struct EmscriptenGlobals {
 
 impl EmscriptenGlobals {
     pub fn new(
-        mut ctx: ContextMut<'_, EmEnv>,
+        mut ctx: ContextMut<'_, EmEnv, ()>,
         module: &Module, /*, static_bump: u32 */
     ) -> Result<Self, String> {
         let mut use_old_abort_on_cannot_grow_memory = false;
@@ -967,7 +967,7 @@ impl EmscriptenGlobals {
 }
 
 pub fn generate_emscripten_env(
-    ctx: &mut ContextMut<'_, EmEnv>,
+    ctx: &mut ContextMut<'_, EmEnv, ()>,
     globals: &mut EmscriptenGlobals,
 ) -> Imports {
     let abort_on_cannot_grow_memory_export = if globals.data.use_old_abort_on_cannot_grow_memory {
@@ -1458,7 +1458,7 @@ pub fn generate_emscripten_env(
     import_object
 }
 
-pub fn nullfunc(ctx: ContextMut<'_, EmEnv>, _x: u32) {
+pub fn nullfunc(ctx: ContextMut<'_, EmEnv, ()>, _x: u32) {
     use crate::process::abort_with_message;
     debug!("emscripten::nullfunc_i {}", _x);
     abort_with_message(

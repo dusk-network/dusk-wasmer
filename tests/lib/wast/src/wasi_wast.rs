@@ -84,13 +84,13 @@ impl<'a> WasiTest<'a> {
         };
         let module = Module::new(store, &wasm_bytes)?;
         let (env, _tempdirs, stdout_rx, stderr_rx) = self.create_wasi_env(filesystem_kind)?;
-        let mut ctx = WasmerContext::new(store, env.clone());
+        let mut ctx = WasmerContext::new(store, env.clone(), ());
         let imports = self.get_imports(&mut ctx.as_context_mut(), &module)?;
         let instance = Instance::new(&mut ctx, &module, &imports)?;
 
         let start = instance.exports.get_function("_start")?;
         let memory = instance.exports.get_memory("memory")?;
-        ctx.data_mut().set_memory(memory.clone());
+        ctx.state_mut().set_memory(memory.clone());
 
         if let Some(stdin) = &self.stdin {
             let state = env.state();
@@ -233,7 +233,7 @@ impl<'a> WasiTest<'a> {
     /// [`WasiEnv`].
     fn get_imports(
         &self,
-        ctx: &mut ContextMut<'_, WasiEnv>,
+        ctx: &mut ContextMut<'_, WasiEnv, ()>,
         module: &Module,
     ) -> anyhow::Result<Imports> {
         let version = self.get_version(module)?;

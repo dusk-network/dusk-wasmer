@@ -17,9 +17,9 @@ extern "C" {
 
 // #[no_mangle]
 /// emscripten: _getenv // (name: *const char) -> *const c_char;
-pub fn _getenv(mut ctx: ContextMut<'_, EmEnv>, name: u32) -> u32 {
+pub fn _getenv(mut ctx: ContextMut<'_, EmEnv, ()>, name: u32) -> u32 {
     debug!("emscripten::_getenv");
-    let memory = ctx.data().memory(0);
+    let memory = ctx.state().memory(0);
     let name_string = read_string_from_wasm(ctx.as_context_mut(), &memory, name);
     debug!("=> name({:?})", name_string);
     let c_str = unsafe { getenv(name_string.as_ptr() as *const libc::c_char) };
@@ -30,9 +30,9 @@ pub fn _getenv(mut ctx: ContextMut<'_, EmEnv>, name: u32) -> u32 {
 }
 
 /// emscripten: _setenv // (name: *const char, name: *const value, overwrite: int);
-pub fn _setenv(mut ctx: ContextMut<'_, EmEnv>, name: u32, value: u32, _overwrite: u32) -> c_int {
+pub fn _setenv(mut ctx: ContextMut<'_, EmEnv, ()>, name: u32, value: u32, _overwrite: u32) -> c_int {
     debug!("emscripten::_setenv");
-    let memory = ctx.data().memory(0);
+    let memory = ctx.state().memory(0);
     // setenv does not exist on windows, so we hack it with _putenv
     let name = read_string_from_wasm(ctx.as_context_mut(), &memory, name);
     let value = read_string_from_wasm(ctx, &memory, value);
@@ -45,9 +45,9 @@ pub fn _setenv(mut ctx: ContextMut<'_, EmEnv>, name: u32, value: u32, _overwrite
 }
 
 /// emscripten: _putenv // (name: *const char);
-pub fn _putenv(ctx: ContextMut<'_, EmEnv>, name: c_int) -> c_int {
+pub fn _putenv(ctx: ContextMut<'_, EmEnv, ()>, name: c_int) -> c_int {
     debug!("emscripten::_putenv");
-    let memory = ctx.data().memory(0);
+    let memory = ctx.state().memory(0);
     let name_addr = emscripten_memory_pointer!(ctx, &memory, name) as *const c_char;
     debug!("=> name({:?})", unsafe {
         std::ffi::CStr::from_ptr(name_addr)
@@ -56,9 +56,9 @@ pub fn _putenv(ctx: ContextMut<'_, EmEnv>, name: c_int) -> c_int {
 }
 
 /// emscripten: _unsetenv // (name: *const char);
-pub fn _unsetenv(ctx: ContextMut<'_, EmEnv>, name: u32) -> c_int {
+pub fn _unsetenv(ctx: ContextMut<'_, EmEnv, ()>, name: u32) -> c_int {
     debug!("emscripten::_unsetenv");
-    let memory = ctx.data().memory(0);
+    let memory = ctx.state().memory(0);
     let name = read_string_from_wasm(ctx, &memory, name);
     // no unsetenv on windows, so use putenv with an empty value
     let unsetenv_string = format!("{}=", name);
@@ -69,11 +69,11 @@ pub fn _unsetenv(ctx: ContextMut<'_, EmEnv>, name: u32) -> c_int {
 }
 
 #[allow(clippy::cast_ptr_alignment)]
-pub fn _getpwnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
+pub fn _getpwnam(mut ctx: ContextMut<'_, EmEnv, ()>, name_ptr: c_int) -> c_int {
     debug!("emscripten::_getpwnam {}", name_ptr);
     #[cfg(not(feature = "debug"))]
     let _ = name_ptr;
-    let memory = ctx.data().memory(0);
+    let memory = ctx.state().memory(0);
 
     #[repr(C)]
     struct GuestPasswd {
@@ -105,11 +105,11 @@ pub fn _getpwnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
 }
 
 #[allow(clippy::cast_ptr_alignment)]
-pub fn _getgrnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
+pub fn _getgrnam(mut ctx: ContextMut<'_, EmEnv, ()>, name_ptr: c_int) -> c_int {
     debug!("emscripten::_getgrnam {}", name_ptr);
     #[cfg(not(feature = "debug"))]
     let _ = name_ptr;
-    let memory = ctx.data().memory(0);
+    let memory = ctx.state().memory(0);
 
     #[repr(C)]
     struct GuestGroup {
@@ -133,7 +133,7 @@ pub fn _getgrnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
     }
 }
 
-pub fn _sysconf(_ctx: ContextMut<'_, EmEnv>, name: c_int) -> c_long {
+pub fn _sysconf(_ctx: ContextMut<'_, EmEnv, ()>, name: c_int) -> c_long {
     debug!("emscripten::_sysconf {}", name);
     #[cfg(not(feature = "debug"))]
     let _ = name;
@@ -141,13 +141,13 @@ pub fn _sysconf(_ctx: ContextMut<'_, EmEnv>, name: c_int) -> c_long {
     0
 }
 
-pub fn _gai_strerror(_ctx: ContextMut<'_, EmEnv>, _ecode: i32) -> i32 {
+pub fn _gai_strerror(_ctx: ContextMut<'_, EmEnv, ()>, _ecode: i32) -> i32 {
     debug!("emscripten::_gai_strerror({}) - stub", _ecode);
     -1
 }
 
 pub fn _getaddrinfo(
-    _ctx: ContextMut<'_, EmEnv>,
+    _ctx: ContextMut<'_, EmEnv, ()>,
     _node_ptr: WasmPtr<c_char>,
     _service_str_ptr: WasmPtr<c_char>,
     _hints_ptr: WasmPtr<EmAddrInfo>,

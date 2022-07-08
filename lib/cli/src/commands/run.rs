@@ -97,7 +97,7 @@ impl Run {
         })
     }
 
-    fn inner_run<T>(&self, mut ctx: WasmerContext<T>, instance: Instance) -> Result<()> {
+    fn inner_run<S, T>(&self, mut ctx: WasmerContext<S, T>, instance: Instance) -> Result<()> {
         let module = self.get_module()?;
         // If this module exports an _initialize function, run that first.
         if let Ok(initialize) = instance.exports.get_function("_initialize") {
@@ -146,10 +146,10 @@ impl Run {
                     bail!("--invoke is not supported with emscripten modules");
                 }
                 // create an EmEnv with default global
-                let mut ctx = WasmerContext::new(module.store(), EmEnv::new());
+                let mut ctx = WasmerContext::new(module.store(), EmEnv::new(), ());
                 let mut emscripten_globals = EmscriptenGlobals::new(ctx.as_context_mut(), &module)
                     .map_err(|e| anyhow!("{}", e))?;
-                ctx.data_mut()
+                ctx.state_mut()
                     .set_data(&emscripten_globals.data, Default::default());
                 let import_object =
                     generate_emscripten_env(&mut ctx.as_context_mut(), &mut emscripten_globals);
@@ -230,7 +230,7 @@ impl Run {
                 }
                 // not WASI
                 _ => {
-                    let mut ctx = WasmerContext::new(module.store(), ());
+                    let mut ctx = WasmerContext::new(module.store(), (), ());
                     let instance = Instance::new(&mut ctx, &module, &imports! {})?;
                     self.inner_run(ctx, instance)
                 }

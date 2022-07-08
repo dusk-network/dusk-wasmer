@@ -78,10 +78,10 @@ impl Function {
     ///     Ok(vec![Value::I32(sum)])
     /// });
     /// ```
-    pub fn new<FT, F, T>(ctx: &mut impl AsContextMut<Data = T>, ty: FT, func: F) -> Self
+    pub fn new<FT, F, S, T>(ctx: &mut impl AsContextMut<State = S, Data = T>, ty: FT, func: F) -> Self
     where
         FT: Into<FunctionType>,
-        F: Fn(ContextMut<'_, T>, &[Value]) -> Result<Vec<Value>, RuntimeError>
+        F: Fn(ContextMut<'_, S, T>, &[Value]) -> Result<Vec<Value>, RuntimeError>
             + 'static
             + Send
             + Sync,
@@ -92,7 +92,7 @@ impl Function {
         let raw_ctx = ctx.as_raw() as *mut u8;
         let wrapper = move |values_vec: *mut RawValue| -> Result<(), RuntimeError> {
             unsafe {
-                let mut ctx = ContextMut::from_raw(raw_ctx as *mut ContextInner<T>);
+                let mut ctx = ContextMut::from_raw(raw_ctx as *mut ContextInner<S, T>);
                 let mut args = Vec::with_capacity(func_ty.params().len());
                 for (i, ty) in func_ty.params().iter().enumerate() {
                     args.push(Value::from_raw(&mut ctx, *ty, *values_vec.add(i)));
@@ -167,9 +167,9 @@ impl Function {
     ///
     /// let f = Function::new_native(&mut ctx, sum);
     /// ```
-    pub fn new_native<T, F, Args, Rets>(ctx: &mut impl AsContextMut<Data = T>, func: F) -> Self
+    pub fn new_native<S, T, F, Args, Rets>(ctx: &mut impl AsContextMut<State = S, Data = T>, func: F) -> Self
     where
-        F: HostFunction<T, Args, Rets> + 'static + Send + Sync,
+        F: HostFunction<S, T, Args, Rets> + 'static + Send + Sync,
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
@@ -180,12 +180,12 @@ impl Function {
         });
         let function_type = FunctionType::new(Args::wasm_types(), Rets::wasm_types());
 
-        let func_ptr = <F as HostFunction<T, Args, Rets>>::function_body_ptr();
+        let func_ptr = <F as HostFunction<S, T, Args, Rets>>::function_body_ptr();
         let type_index = ctx.store().engine().register_signature(&function_type);
         let vmctx = VMFunctionEnvironment {
             host_env: host_data.as_ref() as *const _ as *mut c_void,
         };
-        let call_trampoline = <F as HostFunction<T, Args, Rets>>::call_trampoline_address();
+        let call_trampoline = <F as HostFunction<S, T, Args, Rets>>::call_trampoline_address();
         let anyfunc = VMCallerCheckedAnyfunc {
             func_ptr,
             type_index,
@@ -949,7 +949,7 @@ mod inner {
     /// can be used as host function. To uphold this statement, it is
     /// necessary for a function to be transformed into a pointer to
     /// `VMFunctionBody`.
-    pub trait HostFunction<T, Args, Rets>
+    pub trait HostFunction<S, T, Args, Rets>
     where
         Args: WasmTypeList,
         Rets: WasmTypeList,
@@ -1086,29 +1086,29 @@ mod inner {
 
             // Implement `HostFunction` for a function that has the same arity than the tuple.
             #[allow(unused_parens)]
-            impl< $( $x, )* Rets, RetsAsResult, T, Func >
-                HostFunction<T, ( $( $x ),* ), Rets>
+            impl< $( $x, )* Rets, RetsAsResult, S, T, Func >
+                HostFunction<S, T, ( $( $x ),* ), Rets>
             for
                 Func
             where
                 $( $x: FromToNativeWasmType, )*
                 Rets: WasmTypeList,
                 RetsAsResult: IntoResult<Rets>,
-                Func: Fn(ContextMut<'_, T>, $( $x , )*) -> RetsAsResult + 'static,
+                Func: Fn(ContextMut<'_, S, T>, $( $x , )*) -> RetsAsResult + 'static,
             {
                 #[allow(non_snake_case)]
                 fn function_body_ptr() -> *const VMFunctionBody {
                     /// This is a function that wraps the real host
                     /// function. Its address will be used inside the
                     /// runtime.
-                    unsafe extern "C" fn func_wrapper<T, $( $x, )* Rets, RetsAsResult, Func>( env: &StaticFunction<Func>, $( $x: <$x::Native as NativeWasmType>::Abi, )* ) -> Rets::CStruct
+                    unsafe extern "C" fn func_wrapper<S, T, $( $x, )* Rets, RetsAsResult, Func>( env: &StaticFunction<Func>, $( $x: <$x::Native as NativeWasmType>::Abi, )* ) -> Rets::CStruct
                     where
                         $( $x: FromToNativeWasmType, )*
                         Rets: WasmTypeList,
                         RetsAsResult: IntoResult<Rets>,
-                        Func: Fn(ContextMut<'_, T>, $( $x , )*) -> RetsAsResult + 'static,
+                        Func: Fn(ContextMut<'_, S, T>, $( $x , )*) -> RetsAsResult + 'static,
                     {
-                        let mut ctx = ContextMut::from_raw(env.raw_ctx as *mut ContextInner<T>);
+                        let mut ctx = ContextMut::from_raw(env.raw_ctx as *mut ContextInner<S, T>);
 
                         let result = on_host_stack(|| {
                             panic::catch_unwind(AssertUnwindSafe(|| {
@@ -1126,7 +1126,7 @@ mod inner {
                         }
                     }
 
-                    func_wrapper::< T, $( $x, )* Rets, RetsAsResult, Self > as *const VMFunctionBody
+                    func_wrapper::< S, T, $( $x, )* Rets, RetsAsResult, Self > as *const VMFunctionBody
                 }
 
                 #[allow(non_snake_case)]

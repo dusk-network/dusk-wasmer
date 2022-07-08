@@ -10,11 +10,11 @@ use wasmer::{AsContextMut, ContextMut, WasmPtr};
 /// Wasm memory.  If the memory clobbered by the current syscall is also used by
 /// that syscall, then it may break.
 pub fn fd_filestat_get(
-    mut ctx: ContextMut<'_, WasiEnv>,
+    mut ctx: ContextMut<'_, WasiEnv, ()>,
     fd: types::__wasi_fd_t,
     buf: WasmPtr<snapshot0::__wasi_filestat_t, Memory32>,
 ) -> types::__wasi_errno_t {
-    let env = ctx.data();
+    let env = ctx.state();
     let memory = env.memory();
 
     // transmute the WasmPtr<T1> into a WasmPtr<T2> where T2 > T1, this will read extra memory.
@@ -30,7 +30,7 @@ pub fn fd_filestat_get(
     let result = syscalls::fd_filestat_get::<Memory32>(ctx.as_context_mut(), fd, new_buf);
 
     // reborrow memory
-    let env = ctx.data();
+    let env = ctx.state();
     let memory = env.memory();
 
     // get the values written to memory
@@ -61,7 +61,7 @@ pub fn fd_filestat_get(
 /// Wrapper around `syscalls::path_filestat_get` with extra logic to handle the size
 /// difference of `wasi_filestat_t`
 pub fn path_filestat_get(
-    mut ctx: ContextMut<'_, WasiEnv>,
+    mut ctx: ContextMut<'_, WasiEnv, ()>,
     fd: types::__wasi_fd_t,
     flags: types::__wasi_lookupflags_t,
     path: WasmPtr<u8, Memory32>,
@@ -69,7 +69,7 @@ pub fn path_filestat_get(
     buf: WasmPtr<snapshot0::__wasi_filestat_t, Memory32>,
 ) -> types::__wasi_errno_t {
     // see `fd_filestat_get` in this file for an explanation of this strange behavior
-    let env = ctx.data();
+    let env = ctx.state();
     let memory = env.memory();
 
     let new_buf: WasmPtr<types::__wasi_filestat_t, Memory32> = buf.cast();
@@ -85,7 +85,7 @@ pub fn path_filestat_get(
     );
 
     // need to re-borrow
-    let env = ctx.data();
+    let env = ctx.state();
     let memory = env.memory();
     let new_filestat = wasi_try_mem!(new_buf.deref(&ctx, memory).read());
     let old_stat = snapshot0::__wasi_filestat_t {
@@ -108,7 +108,7 @@ pub fn path_filestat_get(
 /// Wrapper around `syscalls::fd_seek` with extra logic to remap the values
 /// of `__wasi_whence_t`
 pub fn fd_seek(
-    ctx: ContextMut<'_, WasiEnv>,
+    ctx: ContextMut<'_, WasiEnv, ()>,
     fd: types::__wasi_fd_t,
     offset: types::__wasi_filedelta_t,
     whence: snapshot0::__wasi_whence_t,
@@ -127,7 +127,7 @@ pub fn fd_seek(
 /// Wrapper around `syscalls::poll_oneoff` with extra logic to add the removed
 /// userdata field back
 pub fn poll_oneoff(
-    mut ctx: ContextMut<'_, WasiEnv>,
+    mut ctx: ContextMut<'_, WasiEnv, ()>,
     in_: WasmPtr<snapshot0::__wasi_subscription_t, Memory32>,
     out_: WasmPtr<types::__wasi_event_t, Memory32>,
     nsubscriptions: u32,
@@ -137,7 +137,7 @@ pub fn poll_oneoff(
     // we just need to readjust and copy it
 
     // we start by adjusting `in_` into a format that the new code can understand
-    let env = ctx.data();
+    let env = ctx.state();
     let memory = env.memory();
     let nsubscriptions_offset: u32 = nsubscriptions;
     let in_origs = wasi_try_mem_ok!(in_.slice(&ctx, memory, nsubscriptions_offset));
@@ -181,7 +181,7 @@ pub fn poll_oneoff(
     );
 
     // replace the old values of in, in case the calling code reuses the memory
-    let env = ctx.data();
+    let env = ctx.state();
     let memory = env.memory();
 
     for (in_sub, orig) in wasi_try_mem_ok!(in_.slice(&ctx, memory, nsubscriptions_offset))

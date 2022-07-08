@@ -94,12 +94,12 @@ pub fn get_emscripten_metadata(module: &Module) -> Result<Option<(u32, u32)>, St
 }
 
 pub unsafe fn write_to_buf(
-    ctx: ContextMut<'_, EmEnv>,
+    ctx: ContextMut<'_, EmEnv, ()>,
     string: *const c_char,
     buf: u32,
     max: u32,
 ) -> u32 {
-    let buf_addr = emscripten_memory_pointer!(ctx, ctx.data().memory(0), buf) as *mut c_char;
+    let buf_addr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), buf) as *mut c_char;
 
     for i in 0..max {
         *buf_addr.add(i as _) = *string.add(i as _);
@@ -109,12 +109,12 @@ pub unsafe fn write_to_buf(
 }
 
 /// This function expects nullbyte to be appended.
-pub unsafe fn copy_cstr_into_wasm(mut ctx: ContextMut<'_, EmEnv>, cstr: *const c_char) -> u32 {
+pub unsafe fn copy_cstr_into_wasm(mut ctx: ContextMut<'_, EmEnv, ()>, cstr: *const c_char) -> u32 {
     let s = CStr::from_ptr(cstr).to_str().unwrap();
     let cstr_len = s.len();
     let space_offset = env::call_malloc(ctx.as_context_mut(), (cstr_len as u32) + 1);
     let raw_memory =
-        emscripten_memory_pointer!(ctx, ctx.data().memory(0), space_offset) as *mut c_char;
+        emscripten_memory_pointer!(ctx, ctx.state().memory(0), space_offset) as *mut c_char;
     let slice = slice::from_raw_parts_mut(raw_memory, cstr_len);
 
     for (byte, loc) in s.bytes().zip(slice.iter_mut()) {
@@ -131,7 +131,7 @@ pub unsafe fn copy_cstr_into_wasm(mut ctx: ContextMut<'_, EmEnv>, cstr: *const c
 /// # Safety
 /// This method is unsafe because it operates directly with the slice of memory represented by the address
 pub unsafe fn allocate_on_stack<'a, T: Copy>(
-    ctx: &mut ContextMut<'a, EmEnv>,
+    ctx: &mut ContextMut<'a, EmEnv, ()>,
     count: u32,
 ) -> (u32, &'a mut [T]) {
     let stack_alloc_ref = get_emscripten_funcs(ctx).stack_alloc_ref().unwrap().clone();
@@ -139,7 +139,7 @@ pub unsafe fn allocate_on_stack<'a, T: Copy>(
         .call(&mut ctx.as_context_mut(), count * (size_of::<T>() as u32))
         .unwrap();
 
-    let addr = emscripten_memory_pointer!(ctx, ctx.data().memory(0), offset) as *mut T;
+    let addr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), offset) as *mut T;
     let slice = slice::from_raw_parts_mut(addr, count as usize);
 
     (offset, slice)
@@ -148,7 +148,7 @@ pub unsafe fn allocate_on_stack<'a, T: Copy>(
 /// # Safety
 /// This method is unsafe because it uses `allocate_on_stack` which is unsafe
 pub unsafe fn allocate_cstr_on_stack<'a>(
-    ctx: &'a mut ContextMut<'a, EmEnv>,
+    ctx: &'a mut ContextMut<'a, EmEnv, ()>,
     s: &str,
 ) -> (u32, &'a [u8]) {
     let (offset, slice) = allocate_on_stack(ctx, (s.len() + 1) as u32);
@@ -163,7 +163,7 @@ pub unsafe fn allocate_cstr_on_stack<'a>(
 
 #[cfg(not(target_os = "windows"))]
 pub unsafe fn copy_terminated_array_of_cstrs(
-    mut _ctx: ContextMut<'_, EmEnv>,
+    mut _ctx: ContextMut<'_, EmEnv, ()>,
     cstrs: *mut *mut c_char,
 ) -> u32 {
     let _total_num = {
@@ -203,8 +203,8 @@ pub struct GuestStat {
 }
 
 #[allow(clippy::cast_ptr_alignment)]
-pub unsafe fn copy_stat_into_wasm(ctx: ContextMut<'_, EmEnv>, buf: u32, stat: &stat) {
-    let stat_ptr = emscripten_memory_pointer!(ctx, ctx.data().memory(0), buf) as *mut GuestStat;
+pub unsafe fn copy_stat_into_wasm(ctx: ContextMut<'_, EmEnv, ()>, buf: u32, stat: &stat) {
+    let stat_ptr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), buf) as *mut GuestStat;
     (*stat_ptr).st_dev = stat.st_dev as _;
     (*stat_ptr).__st_dev_padding = 0;
     (*stat_ptr).__st_ino_truncated = stat.st_ino as _;
@@ -231,7 +231,7 @@ pub unsafe fn copy_stat_into_wasm(ctx: ContextMut<'_, EmEnv>, buf: u32, stat: &s
 }
 
 #[allow(dead_code)] // it's used in `env/windows/mod.rs`.
-pub fn read_string_from_wasm(ctx: ContextMut<'_, EmEnv>, memory: &Memory, offset: u32) -> String {
+pub fn read_string_from_wasm(ctx: ContextMut<'_, EmEnv, ()>, memory: &Memory, offset: u32) -> String {
     WasmPtr::<u8>::new(offset)
         .read_utf8_string_with_nul(&ctx, memory)
         .unwrap()
@@ -239,7 +239,7 @@ pub fn read_string_from_wasm(ctx: ContextMut<'_, EmEnv>, memory: &Memory, offset
 
 /// This function trys to find an entry in mapdir
 /// translating paths into their correct value
-pub fn get_cstr_path(ctx: ContextMut<'_, EmEnv>, path: *const i8) -> Option<std::ffi::CString> {
+pub fn get_cstr_path(ctx: ContextMut<'_, EmEnv, ()>, path: *const i8) -> Option<std::ffi::CString> {
     use std::collections::VecDeque;
 
     let path_str =
@@ -277,7 +277,7 @@ pub fn get_cstr_path(ctx: ContextMut<'_, EmEnv>, path: *const i8) -> Option<std:
 
 /// gets the current directory
 /// handles mapdir logic
-pub fn get_current_directory(ctx: ContextMut<'_, EmEnv>) -> Option<PathBuf> {
+pub fn get_current_directory(ctx: ContextMut<'_, EmEnv, ()>) -> Option<PathBuf> {
     if let Some(val) = get_emscripten_data(&ctx)
         .as_ref()
         .unwrap()

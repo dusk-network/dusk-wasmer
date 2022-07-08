@@ -5,9 +5,9 @@ use libc::execvp as libc_execvp;
 use std::ffi::CString;
 use wasmer::{ContextMut, WasmPtr};
 
-pub fn execvp(ctx: ContextMut<'_, EmEnv>, command_name_offset: u32, argv_offset: u32) -> i32 {
+pub fn execvp(ctx: ContextMut<'_, EmEnv, ()>, command_name_offset: u32, argv_offset: u32) -> i32 {
     // a single reference to re-use
-    let emscripten_memory = ctx.data().memory(0);
+    let emscripten_memory = ctx.state().memory(0);
 
     // read command name as string
     let command_name_string_vec = WasmPtr::<u8>::new(command_name_offset)
@@ -41,7 +41,7 @@ pub fn execvp(ctx: ContextMut<'_, EmEnv>, command_name_offset: u32, argv_offset:
 
 /// execl
 pub fn execl(
-    _ctx: ContextMut<'_, EmEnv>,
+    _ctx: ContextMut<'_, EmEnv, ()>,
     _path_ptr: i32,
     _arg0_ptr: i32,
     _varargs: VarArgs,
@@ -52,7 +52,7 @@ pub fn execl(
 
 /// execle
 pub fn execle(
-    _ctx: ContextMut<'_, EmEnv>,
+    _ctx: ContextMut<'_, EmEnv, ()>,
     _path_ptr: i32,
     _arg0_ptr: i32,
     _varargs: VarArgs,

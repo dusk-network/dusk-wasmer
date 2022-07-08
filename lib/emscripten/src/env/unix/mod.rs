@@ -14,10 +14,10 @@ use wasmer::{AsContextMut, ContextMut, WasmPtr};
 
 // #[no_mangle]
 /// emscripten: _getenv // (name: *const char) -> *const c_char;
-pub fn _getenv(ctx: ContextMut<'_, EmEnv>, name: i32) -> u32 {
+pub fn _getenv(ctx: ContextMut<'_, EmEnv, ()>, name: i32) -> u32 {
     debug!("emscripten::_getenv");
 
-    let name_addr = emscripten_memory_pointer!(ctx, ctx.data().memory(0), name) as *const c_char;
+    let name_addr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), name) as *const c_char;
 
     debug!("=> name({:?})", unsafe { CStr::from_ptr(name_addr) });
 
@@ -30,11 +30,11 @@ pub fn _getenv(ctx: ContextMut<'_, EmEnv>, name: i32) -> u32 {
 }
 
 /// emscripten: _setenv // (name: *const char, name: *const value, overwrite: int);
-pub fn _setenv(ctx: ContextMut<'_, EmEnv>, name: c_int, value: c_int, overwrite: c_int) -> c_int {
+pub fn _setenv(ctx: ContextMut<'_, EmEnv, ()>, name: c_int, value: c_int, overwrite: c_int) -> c_int {
     debug!("emscripten::_setenv");
 
-    let name_addr = emscripten_memory_pointer!(ctx, ctx.data().memory(0), name) as *const c_char;
-    let value_addr = emscripten_memory_pointer!(ctx, ctx.data().memory(0), value) as *const c_char;
+    let name_addr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), name) as *const c_char;
+    let value_addr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), value) as *const c_char;
 
     debug!("=> name({:?})", unsafe { CStr::from_ptr(name_addr) });
     debug!("=> value({:?})", unsafe { CStr::from_ptr(value_addr) });
@@ -43,10 +43,10 @@ pub fn _setenv(ctx: ContextMut<'_, EmEnv>, name: c_int, value: c_int, overwrite:
 }
 
 /// emscripten: _putenv // (name: *const char);
-pub fn _putenv(ctx: ContextMut<'_, EmEnv>, name: c_int) -> c_int {
+pub fn _putenv(ctx: ContextMut<'_, EmEnv, ()>, name: c_int) -> c_int {
     debug!("emscripten::_putenv");
 
-    let name_addr = emscripten_memory_pointer!(ctx, ctx.data().memory(0), name) as *const c_char;
+    let name_addr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), name) as *const c_char;
 
     debug!("=> name({:?})", unsafe { CStr::from_ptr(name_addr) });
 
@@ -54,10 +54,10 @@ pub fn _putenv(ctx: ContextMut<'_, EmEnv>, name: c_int) -> c_int {
 }
 
 /// emscripten: _unsetenv // (name: *const char);
-pub fn _unsetenv(ctx: ContextMut<'_, EmEnv>, name: c_int) -> c_int {
+pub fn _unsetenv(ctx: ContextMut<'_, EmEnv, ()>, name: c_int) -> c_int {
     debug!("emscripten::_unsetenv");
 
-    let name_addr = emscripten_memory_pointer!(ctx, ctx.data().memory(0), name) as *const c_char;
+    let name_addr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), name) as *const c_char;
 
     debug!("=> name({:?})", unsafe { CStr::from_ptr(name_addr) });
 
@@ -65,7 +65,7 @@ pub fn _unsetenv(ctx: ContextMut<'_, EmEnv>, name: c_int) -> c_int {
 }
 
 #[allow(clippy::cast_ptr_alignment)]
-pub fn _getpwnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
+pub fn _getpwnam(mut ctx: ContextMut<'_, EmEnv, ()>, name_ptr: c_int) -> c_int {
     debug!("emscripten::_getpwnam {}", name_ptr);
     #[cfg(feature = "debug")]
     let _ = name_ptr;
@@ -82,7 +82,7 @@ pub fn _getpwnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
     }
 
     let name = unsafe {
-        let memory = ctx.data().memory(0);
+        let memory = ctx.state().memory(0);
         let memory_name_ptr = emscripten_memory_pointer!(ctx, memory, name_ptr) as *const c_char;
         CStr::from_ptr(memory_name_ptr)
     };
@@ -92,7 +92,7 @@ pub fn _getpwnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
         let passwd_struct_offset =
             call_malloc(ctx.as_context_mut(), mem::size_of::<GuestPasswd>() as _);
 
-        let memory = ctx.data().memory(0);
+        let memory = ctx.state().memory(0);
         let passwd_struct_ptr =
             emscripten_memory_pointer!(ctx, memory, passwd_struct_offset) as *mut GuestPasswd;
         (*passwd_struct_ptr).pw_name = copy_cstr_into_wasm(ctx.as_context_mut(), passwd.pw_name);
@@ -109,7 +109,7 @@ pub fn _getpwnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
 }
 
 #[allow(clippy::cast_ptr_alignment)]
-pub fn _getgrnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
+pub fn _getgrnam(mut ctx: ContextMut<'_, EmEnv, ()>, name_ptr: c_int) -> c_int {
     debug!("emscripten::_getgrnam {}", name_ptr);
 
     #[repr(C)]
@@ -122,7 +122,7 @@ pub fn _getgrnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
 
     let name = unsafe {
         let memory_name_ptr =
-            emscripten_memory_pointer!(ctx, ctx.data().memory(0), name_ptr) as *const c_char;
+            emscripten_memory_pointer!(ctx, ctx.state().memory(0), name_ptr) as *const c_char;
         CStr::from_ptr(memory_name_ptr)
     };
 
@@ -132,7 +132,7 @@ pub fn _getgrnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
             call_malloc(ctx.as_context_mut(), mem::size_of::<GuestGroup>() as _);
 
         let group_struct_ptr =
-            emscripten_memory_pointer!(ctx, ctx.data().memory(0), group_struct_offset)
+            emscripten_memory_pointer!(ctx, ctx.state().memory(0), group_struct_offset)
                 as *mut GuestGroup;
         (*group_struct_ptr).gr_name = copy_cstr_into_wasm(ctx.as_context_mut(), group.gr_name);
         (*group_struct_ptr).gr_passwd = copy_cstr_into_wasm(ctx.as_context_mut(), group.gr_passwd);
@@ -143,21 +143,21 @@ pub fn _getgrnam(mut ctx: ContextMut<'_, EmEnv>, name_ptr: c_int) -> c_int {
     }
 }
 
-pub fn _sysconf(_ctx: ContextMut<'_, EmEnv>, name: c_int) -> i32 {
+pub fn _sysconf(_ctx: ContextMut<'_, EmEnv, ()>, name: c_int) -> i32 {
     debug!("emscripten::_sysconf {}", name);
     // TODO: Implement like emscripten expects regarding memory/page size
     unsafe { sysconf(name) as i32 } // TODO review i64
 }
 
 // this may be a memory leak, probably not though because emscripten does the same thing
-pub fn _gai_strerror(mut ctx: ContextMut<'_, EmEnv>, ecode: i32) -> i32 {
+pub fn _gai_strerror(mut ctx: ContextMut<'_, EmEnv, ()>, ecode: i32) -> i32 {
     debug!("emscripten::_gai_strerror({})", ecode);
 
     let cstr = unsafe { std::ffi::CStr::from_ptr(libc::gai_strerror(ecode)) };
     let bytes = cstr.to_bytes_with_nul();
     let string_on_guest: WasmPtr<c_char> =
         call_malloc_with_cast(ctx.as_context_mut(), bytes.len() as _);
-    let memory = ctx.data().memory(0);
+    let memory = ctx.state().memory(0);
 
     let writer = string_on_guest
         .slice(&ctx, &memory, bytes.len() as _)
@@ -170,7 +170,7 @@ pub fn _gai_strerror(mut ctx: ContextMut<'_, EmEnv>, ecode: i32) -> i32 {
 }
 
 pub fn _getaddrinfo(
-    mut ctx: ContextMut<'_, EmEnv>,
+    mut ctx: ContextMut<'_, EmEnv, ()>,
     node_ptr: WasmPtr<c_char>,
     service_str_ptr: WasmPtr<c_char>,
     hints_ptr: WasmPtr<EmAddrInfo>,
@@ -178,7 +178,7 @@ pub fn _getaddrinfo(
 ) -> i32 {
     use libc::{addrinfo, freeaddrinfo};
     debug!("emscripten::_getaddrinfo");
-    let memory = ctx.data().memory(0);
+    let memory = ctx.state().memory(0);
     debug!(" => node = {}", {
         if node_ptr.is_null() {
             std::borrow::Cow::Borrowed("null")
