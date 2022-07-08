@@ -241,7 +241,8 @@ pub fn _localtime(mut ctx: ContextMut<'_, EmEnv, ()>, time_p: u32) -> c_int {
     //      https://stackoverflow.com/questions/19170721/real-time-awareness-of-timezone-change-in-localtime-vs-localtime-r
 
     let timespec = unsafe {
-        let time_p_addr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), time_p) as *mut i64;
+        let time_p_addr =
+            emscripten_memory_pointer!(ctx, ctx.state().memory(0), time_p) as *mut i64;
         let seconds = *time_p_addr;
         time::OffsetDateTime::from_unix_timestamp(seconds)
     };
@@ -314,7 +315,8 @@ pub fn _time(ctx: ContextMut<'_, EmEnv, ()>, time_p: u32) -> i32 {
     debug!("emscripten::_time {}", time_p);
 
     unsafe {
-        let time_p_addr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), time_p) as *mut i64;
+        let time_p_addr =
+            emscripten_memory_pointer!(ctx, ctx.state().memory(0), time_p) as *mut i64;
         libc_time(time_p_addr) as i32 // TODO review i64
     }
 }
@@ -404,7 +406,8 @@ pub fn _strftime(
     #[allow(clippy::cast_ptr_alignment)]
     let s = emscripten_memory_pointer!(ctx, ctx.state().memory(0), s_ptr) as *mut c_char;
     #[allow(clippy::cast_ptr_alignment)]
-    let format = emscripten_memory_pointer!(ctx, ctx.state().memory(0), format_ptr) as *const c_char;
+    let format =
+        emscripten_memory_pointer!(ctx, ctx.state().memory(0), format_ptr) as *const c_char;
     #[allow(clippy::cast_ptr_alignment)]
     let tm = emscripten_memory_pointer!(ctx, ctx.state().memory(0), tm_ptr) as *const guest_tm;
 

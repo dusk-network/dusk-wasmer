@@ -30,7 +30,12 @@ pub fn _getenv(ctx: ContextMut<'_, EmEnv, ()>, name: i32) -> u32 {
 }
 
 /// emscripten: _setenv // (name: *const char, name: *const value, overwrite: int);
-pub fn _setenv(ctx: ContextMut<'_, EmEnv, ()>, name: c_int, value: c_int, overwrite: c_int) -> c_int {
+pub fn _setenv(
+    ctx: ContextMut<'_, EmEnv, ()>,
+    name: c_int,
+    value: c_int,
+    overwrite: c_int,
+) -> c_int {
     debug!("emscripten::_setenv");
 
     let name_addr = emscripten_memory_pointer!(ctx, ctx.state().memory(0), name) as *const c_char;

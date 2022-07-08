@@ -16,14 +16,16 @@ pub fn spectest_importobject(context: &mut Context<(), ()>) -> Imports {
     let print_f64 = Function::new_native(context, |_: ContextMut<'_, (), ()>, val: f64| {
         println!("{}: f64", val)
     });
-    let print_i32_f32 = Function::new_native(context, |_: ContextMut<'_, (), ()>, i: i32, f: f32| {
-        println!("{}: i32", i);
-        println!("{}: f32", f);
-    });
-    let print_f64_f64 = Function::new_native(context, |_: ContextMut<'_, (), ()>, f1: f64, f2: f64| {
-        println!("{}: f64", f1);
-        println!("{}: f64", f2);
-    });
+    let print_i32_f32 =
+        Function::new_native(context, |_: ContextMut<'_, (), ()>, i: i32, f: f32| {
+            println!("{}: i32", i);
+            println!("{}: f32", f);
+        });
+    let print_f64_f64 =
+        Function::new_native(context, |_: ContextMut<'_, (), ()>, f1: f64, f2: f64| {
+            println!("{}: f64", f1);
+            println!("{}: f64", f2);
+        });
 
     let global_i32 = Global::new(context, Value::I32(666));
     let global_i64 = Global::new(context, Value::I64(666));

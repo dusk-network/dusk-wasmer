@@ -78,7 +78,11 @@ impl Function {
     ///     Ok(vec![Value::I32(sum)])
     /// });
     /// ```
-    pub fn new<FT, F, S, T>(ctx: &mut impl AsContextMut<State = S, Data = T>, ty: FT, func: F) -> Self
+    pub fn new<FT, F, S, T>(
+        ctx: &mut impl AsContextMut<State = S, Data = T>,
+        ty: FT,
+        func: F,
+    ) -> Self
     where
         FT: Into<FunctionType>,
         F: Fn(ContextMut<'_, S, T>, &[Value]) -> Result<Vec<Value>, RuntimeError>
@@ -167,7 +171,10 @@ impl Function {
     ///
     /// let f = Function::new_native(&mut ctx, sum);
     /// ```
-    pub fn new_native<S, T, F, Args, Rets>(ctx: &mut impl AsContextMut<State = S, Data = T>, func: F) -> Self
+    pub fn new_native<S, T, F, Args, Rets>(
+        ctx: &mut impl AsContextMut<State = S, Data = T>,
+        func: F,
+    ) -> Self
     where
         F: HostFunction<S, T, Args, Rets> + 'static + Send + Sync,
         Args: WasmTypeList,
