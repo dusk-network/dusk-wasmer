@@ -69,6 +69,7 @@ pub trait Tunables: MemoryUsage {
         memory_styles: &PrimaryMap<MemoryIndex, MemoryStyle>,
         memory_definition_locations: &[NonNull<VMMemoryDefinition>],
     ) -> Result<PrimaryMap<LocalMemoryIndex, Arc<dyn Memory>>, LinkError> {
+        println!("Tunables: create_memories, module id {:?}", module.id);
         let num_imports = module.num_imported_memories;
         let mut memories: PrimaryMap<LocalMemoryIndex, _> =
             PrimaryMap::with_capacity(module.memories.len() - num_imports);

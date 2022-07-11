@@ -174,7 +174,9 @@ impl Module {
     }
 
     fn compile(store: &Store, binary: &[u8]) -> Result<Self, CompileError> {
+        println!("Module: compile - before");
         let artifact = store.engine().compile(binary, store.tunables())?;
+        println!("Module: compile - after");
         Ok(Self::from_artifact(store, artifact))
     }
 

@@ -94,6 +94,7 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
 
         let (allocator, memory_definition_locations, table_definition_locations) =
             InstanceAllocator::new(&*module);
+        println!("Artifact: instantiate - before create memories");
         let finished_memories = tunables
             .create_memories(&module, self.memory_styles(), &memory_definition_locations)
             .map_err(InstantiationError::Link)?
@@ -123,6 +124,7 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
             import_function_envs,
         )
         .map_err(|trap| InstantiationError::Start(RuntimeError::from_trap(trap)))?;
+        println!("Artifact: instantiate - finish");
         Ok(handle)
     }
     /// Finishes the instantiation of a just created `InstanceHandle`.

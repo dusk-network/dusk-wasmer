@@ -37,10 +37,16 @@ impl MemoryStyle {
     /// Returns the offset-guard size
     pub fn offset_guard_size(&self) -> u64 {
         match self {
-            Self::Dynamic { offset_guard_size } => *offset_guard_size,
+            Self::Dynamic { offset_guard_size } => {
+                println!("MemoryStyle: offset_guard_size Dynamic {}", *offset_guard_size);
+                *offset_guard_size
+            },
             Self::Static {
                 offset_guard_size, ..
-            } => *offset_guard_size,
+            } => {
+                println!("MemoryStyle: offset_guard_size Static {}", *offset_guard_size);
+                *offset_guard_size
+            },
         }
     }
 }
