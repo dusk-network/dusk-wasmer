@@ -27,7 +27,9 @@ jobs:
           echo $VERSION
           echo $SHOULD_CHECK_API
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:
