@@ -6,7 +6,7 @@ mod js {
     #[wasm_bindgen_test]
     fn global_new() {
         let store = Store::default();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let global = Global::new(&mut ctx, Value::I32(10));
         assert_eq!(
             global.ty(&ctx),
@@ -29,7 +29,7 @@ mod js {
     #[wasm_bindgen_test]
     fn global_get() {
         let store = Store::default();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let global_i32 = Global::new(&mut ctx, Value::I32(10));
         assert_eq!(global_i32.get(&ctx), Value::I32(10));
         // 64-bit values are not yet fully supported in some versions of Node
@@ -46,7 +46,7 @@ mod js {
     #[wasm_bindgen_test]
     fn global_set() {
         let store = Store::default();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let global_i32 = Global::new(&mut ctx, Value::I32(10));
         // Set on a constant should error
         assert!(global_i32.set(&mut ctx, Value::I32(20)).is_err());
@@ -63,13 +63,13 @@ mod js {
     #[wasm_bindgen_test]
     fn table_new() {
         let store = Store::default();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let table_type = TableType {
             ty: Type::FuncRef,
             minimum: 0,
             maximum: None,
         };
-        let f = Function::new_native(&mut ctx, |_: ContextMut<'_, ()>| {});
+        let f = Function::new_native(&mut ctx, |_: ContextMut<'_, (), ()>| {});
         let table = Table::new(&mut ctx, table_type, Value::FuncRef(Some(f))).unwrap();
         assert_eq!(table.ty(&ctx), table_type);
 
@@ -91,7 +91,7 @@ mod js {
     // #[ignore]
     // fn table_get() -> Result<()> {
     //     let store = Store::default();
-    // let mut ctx = Context::new(&store, ());
+    // let mut ctx = Context::new(&store, (), ());
     //     let table_type = TableType {
     //         ty: Type::FuncRef,
     //         minimum: 0,
@@ -115,7 +115,7 @@ mod js {
     // #[test]
     // fn table_grow() -> Result<()> {
     //     let store = Store::default();
-    // let mut ctx = Context::new(&store, ());
+    // let mut ctx = Context::new(&store, (), ());
     //     let table_type = TableType {
     //         ty: Type::FuncRef,
     //         minimum: 0,
@@ -144,7 +144,7 @@ mod js {
     #[wasm_bindgen_test]
     fn memory_new() {
         let store = Store::default();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let memory_type = MemoryType {
             shared: false,
             minimum: Pages(0),
@@ -158,7 +158,7 @@ mod js {
     #[wasm_bindgen_test]
     fn memory_grow() {
         let store = Store::default();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
 
         let desc = MemoryType::new(Pages(10), Some(Pages(16)), false);
         let memory = Memory::new(&mut ctx, desc).unwrap();
@@ -182,30 +182,30 @@ mod js {
     #[wasm_bindgen_test]
     fn function_new() {
         let store = Store::default();
-        let mut ctx = Context::new(&store, ());
-        let function = Function::new_native(&mut ctx, |_ctx: ContextMut<'_, ()>| {});
+        let mut ctx = Context::new(&store, (), ());
+        let function = Function::new_native(&mut ctx, |_ctx: ContextMut<'_, (), ()>| {});
         assert_eq!(function.ty(&ctx).clone(), FunctionType::new(vec![], vec![]));
-        let function = Function::new_native(&mut ctx, |_ctx: ContextMut<'_, ()>, _a: i32| {});
+        let function = Function::new_native(&mut ctx, |_ctx: ContextMut<'_, (), ()>, _a: i32| {});
         assert_eq!(
             function.ty(&ctx).clone(),
             FunctionType::new(vec![Type::I32], vec![])
         );
         let function = Function::new_native(
             &mut ctx,
-            |_ctx: ContextMut<'_, ()>, _a: i32, _b: i64, _c: f32, _d: f64| {},
+            |_ctx: ContextMut<'_, (), ()>, _a: i32, _b: i64, _c: f32, _d: f64| {},
         );
         assert_eq!(
             function.ty(&ctx).clone(),
             FunctionType::new(vec![Type::I32, Type::I64, Type::F32, Type::F64], vec![])
         );
-        let function = Function::new_native(&mut ctx, |_ctx: ContextMut<'_, ()>| -> i32 { 1 });
+        let function = Function::new_native(&mut ctx, |_ctx: ContextMut<'_, (), ()>| -> i32 { 1 });
         assert_eq!(
             function.ty(&ctx).clone(),
             FunctionType::new(vec![], vec![Type::I32])
         );
         let function = Function::new_native(
             &mut ctx,
-            |_ctx: ContextMut<'_, ()>| -> (i32, i64, f32, f64) { (1, 2, 3.0, 4.0) },
+            |_ctx: ContextMut<'_, (), ()>| -> (i32, i64, f32, f64) { (1, 2, 3.0, 4.0) },
         );
         assert_eq!(
             function.ty(&ctx).clone(),
@@ -220,31 +220,31 @@ mod js {
         struct MyEnv {}
 
         let my_env = MyEnv {};
-        let mut ctx = Context::new(&store, my_env);
+        let mut ctx = Context::new(&store, (), my_env);
 
-        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, MyEnv>| {});
+        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, MyEnv, ()>| {});
         assert_eq!(function.ty(&ctx).clone(), FunctionType::new(vec![], vec![]));
-        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, MyEnv>, _a: i32| {});
+        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, MyEnv, ()>, _a: i32| {});
         assert_eq!(
             function.ty(&ctx).clone(),
             FunctionType::new(vec![Type::I32], vec![])
         );
         let function = Function::new_native(
             &mut ctx,
-            |_: ContextMut<'_, MyEnv>, _a: i32, _b: i64, _c: f32, _d: f64| {},
+            |_: ContextMut<'_, MyEnv, ()>, _a: i32, _b: i64, _c: f32, _d: f64| {},
         );
         assert_eq!(
             function.ty(&ctx).clone(),
             FunctionType::new(vec![Type::I32, Type::I64, Type::F32, Type::F64], vec![])
         );
-        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, MyEnv>| -> i32 { 1 });
+        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, MyEnv, ()>| -> i32 { 1 });
         assert_eq!(
             function.ty(&ctx).clone(),
             FunctionType::new(vec![], vec![Type::I32])
         );
         let function = Function::new_native(
             &mut ctx,
-            |_: ContextMut<'_, MyEnv>| -> (i32, i64, f32, f64) { (1, 2, 3.0, 4.0) },
+            |_: ContextMut<'_, MyEnv, ()>| -> (i32, i64, f32, f64) { (1, 2, 3.0, 4.0) },
         );
         assert_eq!(
             function.ty(&ctx).clone(),
@@ -255,21 +255,21 @@ mod js {
     #[wasm_bindgen_test]
     fn function_new_dynamic() {
         let store = Store::default();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
 
         // Using &FunctionType signature
         let function_type = FunctionType::new(vec![], vec![]);
         let function = Function::new(
             &mut ctx,
             &function_type,
-            |_ctx: ContextMut<'_, ()>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), ()>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).clone(), function_type);
         let function_type = FunctionType::new(vec![Type::I32], vec![]);
         let function = Function::new(
             &mut ctx,
             &function_type,
-            |_ctx: ContextMut<'_, ()>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), ()>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).clone(), function_type);
         let function_type =
@@ -277,14 +277,14 @@ mod js {
         let function = Function::new(
             &mut ctx,
             &function_type,
-            |_ctx: ContextMut<'_, ()>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), ()>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).clone(), function_type);
         let function_type = FunctionType::new(vec![], vec![Type::I32]);
         let function = Function::new(
             &mut ctx,
             &function_type,
-            |_ctx: ContextMut<'_, ()>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), ()>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).clone(), function_type);
         let function_type =
@@ -292,7 +292,7 @@ mod js {
         let function = Function::new(
             &mut ctx,
             &function_type,
-            |_ctx: ContextMut<'_, ()>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), ()>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).clone(), function_type);
 
@@ -301,7 +301,7 @@ mod js {
         let function = Function::new(
             &mut ctx,
             function_type,
-            |_ctx: ContextMut<'_, ()>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), ()>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).params(), [Type::V128]);
         assert_eq!(
@@ -317,21 +317,21 @@ mod js {
         struct MyEnv {}
 
         let my_env = MyEnv {};
-        let mut ctx = Context::new(&store, my_env);
+        let mut ctx = Context::new(&store, (), my_env);
 
         // Using &FunctionType signature
         let function_type = FunctionType::new(vec![], vec![]);
         let function = Function::new(
             &mut ctx,
             &function_type,
-            |_ctx: ContextMut<'_, MyEnv>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), MyEnv>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).clone(), function_type);
         let function_type = FunctionType::new(vec![Type::I32], vec![]);
         let function = Function::new(
             &mut ctx,
             &function_type,
-            |_ctx: ContextMut<'_, MyEnv>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), MyEnv>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).clone(), function_type);
         let function_type =
@@ -339,14 +339,14 @@ mod js {
         let function = Function::new(
             &mut ctx,
             &function_type,
-            |_ctx: ContextMut<'_, MyEnv>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), MyEnv>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).clone(), function_type);
         let function_type = FunctionType::new(vec![], vec![Type::I32]);
         let function = Function::new(
             &mut ctx,
             &function_type,
-            |_ctx: ContextMut<'_, MyEnv>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), MyEnv>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).clone(), function_type);
         let function_type =
@@ -354,7 +354,7 @@ mod js {
         let function = Function::new(
             &mut ctx,
             &function_type,
-            |_ctx: ContextMut<'_, MyEnv>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), MyEnv>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).clone(), function_type);
 
@@ -363,7 +363,7 @@ mod js {
         let function = Function::new(
             &mut ctx,
             function_type,
-            |_ctx: ContextMut<'_, MyEnv>, _values: &[Value]| unimplemented!(),
+            |_ctx: ContextMut<'_, (), MyEnv>, _values: &[Value]| unimplemented!(),
         );
         assert_eq!(function.ty(&ctx).params(), [Type::V128]);
         assert_eq!(
@@ -375,14 +375,15 @@ mod js {
     #[wasm_bindgen_test]
     fn native_function_works() {
         let store = Store::default();
-        let mut ctx = Context::new(&store, ());
-        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, ()>| {});
+        let mut ctx = Context::new(&store, (), ());
+        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, (), ()>| {});
         let typed_function: TypedFunction<(), ()> = function.native(&mut ctx).unwrap();
         let result = typed_function.call(&mut ctx);
         assert!(result.is_ok());
 
-        let function =
-            Function::new_native(&mut ctx, |_: ContextMut<'_, ()>, a: i32| -> i32 { a + 1 });
+        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, (), ()>, a: i32| -> i32 {
+            a + 1
+        });
         let typed_function: TypedFunction<i32, i32> = function.native(&mut ctx).unwrap();
         assert_eq!(typed_function.call(&mut ctx, 3).unwrap(), 4);
 
@@ -393,11 +394,11 @@ mod js {
         // let typed_function: TypedFunction<(i32, i64, f32, f64), u64> = function.native(&mut ctx).unwrap();
         // assert_eq!(typed_function.call(8, 4, 1.5, 5.).unwrap(), 8415);
 
-        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, ()>| -> i32 { 1 });
+        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, (), ()>| -> i32 { 1 });
         let typed_function: TypedFunction<(), i32> = function.native(&mut ctx).unwrap();
         assert_eq!(typed_function.call(&mut ctx).unwrap(), 1);
 
-        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, ()>, _a: i32| {});
+        let function = Function::new_native(&mut ctx, |_: ContextMut<'_, (), ()>, _a: i32| {});
         let typed_function: TypedFunction<i32, ()> = function.native(&mut ctx).unwrap();
         assert!(typed_function.call(&mut ctx, 4).is_ok());
 
@@ -409,7 +410,7 @@ mod js {
     #[wasm_bindgen_test]
     fn function_outlives_instance() {
         let store = Store::default();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let wat = r#"(module
       (type $sum_t (func (param i32 i32) (result i32)))
       (func $sum_f (type $sum_t) (param $x i32) (param $y i32) (result i32)

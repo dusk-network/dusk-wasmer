@@ -41,7 +41,7 @@ mod js {
             .unwrap();
 
         let import_object = imports! {};
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let instance = Instance::new(&mut ctx, &module, &import_object).unwrap();
 
         let memory = instance.exports.get_memory("mem").unwrap();
@@ -81,7 +81,7 @@ mod js {
             .unwrap();
 
         let import_object = imports! {};
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let instance = Instance::new(&mut ctx, &module, &import_object).unwrap();
 
         let get_magic = instance.exports.get_function("get_magic").unwrap();
@@ -121,7 +121,7 @@ mod js {
                 ))],
             })
             .unwrap();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
 
         let imported_signature = FunctionType::new(vec![Type::I32], vec![Type::I32]);
 
@@ -238,7 +238,7 @@ mod js {
             multiplier: i32,
         }
 
-        let mut ctx = Context::new(&store, Env { multiplier: 3 });
+        let mut ctx = Context::new(&store, (), Env { multiplier: 3 });
 
         let imported_signature = FunctionType::new(vec![Type::I32], vec![Type::I32]);
         let imported = Function::new(&mut ctx, &imported_signature, |ctx, args| {
@@ -289,11 +289,11 @@ mod js {
             })
             .unwrap();
 
-        fn imported_fn(_: ContextMut<'_, ()>, arg: u32) -> u32 {
+        fn imported_fn(_: ContextMut<'_, (), ()>, arg: u32) -> u32 {
             return arg + 1;
         }
 
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let imported = Function::new_native(&mut ctx, imported_fn);
 
         let import_object = imports! {
@@ -342,13 +342,13 @@ mod js {
             multiplier: u32,
         }
 
-        fn imported_fn(ctx: ContextMut<'_, Env>, arg: u32) -> u32 {
+        fn imported_fn(ctx: ContextMut<'_, (), Env>, arg: u32) -> u32 {
             log!("inside imported_fn: ctx.data is {:?}", ctx.data());
             // log!("inside call id is {:?}", ctx.as_context_ref().objects().id);
             return ctx.data().multiplier * arg;
         }
 
-        let mut ctx = Context::new(&store, Env { multiplier: 3 });
+        let mut ctx = Context::new(&store, (), Env { multiplier: 3 });
 
         let imported = Function::new_native(&mut ctx, imported_fn);
 
@@ -401,7 +401,7 @@ mod js {
             memory: Option<Memory>,
         }
 
-        fn imported_fn(ctx: ContextMut<'_, Env>, arg: u32) -> u32 {
+        fn imported_fn(ctx: ContextMut<'_, (), Env>, arg: u32) -> u32 {
             let memory: &Memory = ctx.data().memory.as_ref().unwrap();
             let memory_val = memory.uint8view(&ctx).get_index(0);
             return (memory_val as u32) * ctx.data().multiplier * arg;
@@ -409,6 +409,7 @@ mod js {
 
         let mut ctx = Context::new(
             &store,
+            (),
             Env {
                 multiplier: 3,
                 memory: None,
@@ -454,9 +455,12 @@ mod js {
             multiplier: u32,
         }
 
-        let mut ctx = Context::new(&store, Env { multiplier: 3 });
+        let mut ctx = Context::new(&store, (), Env { multiplier: 3 });
 
-        fn imported_fn(ctx: ContextMut<'_, Env>, args: &[Val]) -> Result<Vec<Val>, RuntimeError> {
+        fn imported_fn(
+            ctx: ContextMut<'_, (), Env>,
+            args: &[Val],
+        ) -> Result<Vec<Val>, RuntimeError> {
             let value = ctx.data().multiplier * args[0].unwrap_i32() as u32;
             return Ok(vec![Val::I32(value as _)]);
         }
@@ -503,7 +507,10 @@ mod js {
             memory: Option<Memory>,
         }
 
-        fn imported_fn(ctx: ContextMut<'_, Env>, args: &[Val]) -> Result<Vec<Val>, RuntimeError> {
+        fn imported_fn(
+            ctx: ContextMut<'_, (), Env>,
+            args: &[Val],
+        ) -> Result<Vec<Val>, RuntimeError> {
             let memory: &Memory = ctx.data().memory.as_ref().unwrap();
             let memory_val = memory.uint8view(&ctx).get_index(0);
             let value = (memory_val as u32) * ctx.data().multiplier * args[0].unwrap_i32() as u32;
@@ -512,6 +519,7 @@ mod js {
 
         let mut ctx = Context::new(
             &store,
+            (),
             Env {
                 multiplier: 3,
                 memory: None,
@@ -579,7 +587,7 @@ mod js {
                 ],
             })
             .unwrap();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let global = Global::new_mut(&mut ctx, Value::I32(0));
         let import_object = imports! {
             "" => {
@@ -623,11 +631,11 @@ mod js {
         )
         .unwrap();
 
-        fn sum(_: ContextMut<'_, ()>, a: i32, b: i32) -> i32 {
+        fn sum(_: ContextMut<'_, (), ()>, a: i32, b: i32) -> i32 {
             a + b
         }
 
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
 
         let import_object = imports! {
             "env" => {
@@ -664,10 +672,10 @@ mod js {
         )
         .unwrap();
 
-        fn early_exit(_: ContextMut<'_, ()>) {
+        fn early_exit(_: ContextMut<'_, (), ()>) {
             panic!("Do panic")
         }
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
 
         let import_object = imports! {
             "env" => {
@@ -713,7 +721,7 @@ mod js {
         )
         .unwrap();
 
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
 
         use std::fmt;
 
@@ -728,7 +736,7 @@ mod js {
 
         impl std::error::Error for ExitCode {}
 
-        fn early_exit(_: ContextMut<'_, ()>) -> Result<(), ExitCode> {
+        fn early_exit(_: ContextMut<'_, (), ()>) -> Result<(), ExitCode> {
             Err(ExitCode(1))
         }
 
@@ -792,7 +800,7 @@ mod js {
         .unwrap();
 
         let import_object = imports! {};
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
         let result = Instance::new(&mut ctx, &module, &import_object);
         let err = result.unwrap_err();
         assert!(format!("{:?}", err).contains("zero"))

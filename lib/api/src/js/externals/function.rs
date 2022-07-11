@@ -95,10 +95,14 @@ impl Function {
     /// });
     /// ```
     #[allow(clippy::cast_ptr_alignment)]
-    pub fn new<FT, F, T>(ctx: &mut impl AsContextMut<Data = T>, ty: FT, func: F) -> Self
+    pub fn new<FT, F, S, T>(
+        ctx: &mut impl AsContextMut<State = S, Data = T>,
+        ty: FT,
+        func: F,
+    ) -> Self
     where
         FT: Into<FunctionType>,
-        F: Fn(ContextMut<'_, T>, &[Value]) -> Result<Vec<Value>, RuntimeError>
+        F: Fn(ContextMut<'_, S, T>, &[Value]) -> Result<Vec<Value>, RuntimeError>
             + 'static
             + Send
             + Sync,
@@ -110,7 +114,7 @@ impl Function {
 
         let wrapped_func: JsValue = match function_type.results().len() {
             0 => Closure::wrap(Box::new(move |args: &Array| {
-                let mut ctx: ContextMut<T> = unsafe { ContextMut::from_raw(raw_ctx as _) };
+                let mut ctx: ContextMut<S, T> = unsafe { ContextMut::from_raw(raw_ctx as _) };
                 let wasm_arguments = function_type
                     .params()
                     .iter()
@@ -123,7 +127,7 @@ impl Function {
                 as Box<dyn FnMut(&Array) -> Result<(), JsValue>>)
             .into_js_value(),
             1 => Closure::wrap(Box::new(move |args: &Array| {
-                let mut ctx: ContextMut<T> = unsafe { ContextMut::from_raw(raw_ctx as _) };
+                let mut ctx: ContextMut<S, T> = unsafe { ContextMut::from_raw(raw_ctx as _) };
                 let wasm_arguments = function_type
                     .params()
                     .iter()
@@ -136,7 +140,7 @@ impl Function {
                 as Box<dyn FnMut(&Array) -> Result<JsValue, JsValue>>)
             .into_js_value(),
             _n => Closure::wrap(Box::new(move |args: &Array| {
-                let mut ctx: ContextMut<T> = unsafe { ContextMut::from_raw(raw_ctx as _) };
+                let mut ctx: ContextMut<S, T> = unsafe { ContextMut::from_raw(raw_ctx as _) };
                 let wasm_arguments = function_type
                     .params()
                     .iter()
@@ -174,9 +178,9 @@ impl Function {
     ///
     /// let f = Function::new_native(&store, sum);
     /// ```
-    pub fn new_native<T, F, Args, Rets>(ctx: &mut impl AsContextMut<Data = T>, func: F) -> Self
+    pub fn new_native<S, T, F, Args, Rets>(ctx: &mut impl AsContextMut, func: F) -> Self
     where
-        F: HostFunction<T, Args, Rets>,
+        F: HostFunction<S, T, Args, Rets>,
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
@@ -292,9 +296,9 @@ impl Function {
     ///
     /// assert_eq!(sum.call(&[Value::I32(1), Value::I32(2)]).unwrap().to_vec(), vec![Value::I32(3)]);
     /// ```
-    pub fn call<T>(
+    pub fn call<S, T>(
         &self,
-        ctx: &mut impl AsContextMut<Data = T>,
+        ctx: &mut impl AsContextMut<State = S, Data = T>,
         params: &[Value],
     ) -> Result<Box<[Value]>, RuntimeError> {
         let arr = js_sys::Array::new_with_length(params.len() as u32);
@@ -778,10 +782,11 @@ mod inner {
     /// can be used as host function. To uphold this statement, it is
     /// necessary for a function to be transformed into a pointer to
     /// `VMFunctionBody`.
-    pub trait HostFunction<T, Args, Rets>
+    pub trait HostFunction<S, T, Args, Rets>
     where
         Args: WasmTypeList,
         Rets: WasmTypeList,
+        S: Sized,
         T: Sized,
         Self: Sized,
     {
@@ -807,9 +812,10 @@ mod inner {
     {
         /// Creates a new `Function`.
         #[allow(dead_code)]
-        pub fn new<F, T>(function: F) -> Self
+        pub fn new<F, S, T>(function: F) -> Self
         where
-            F: HostFunction<T, Args, Rets>,
+            F: HostFunction<S, T, Args, Rets>,
+            S: Sized,
             T: Sized,
         {
             Self {
@@ -953,31 +959,31 @@ mod inner {
 
             // Implement `HostFunction` for a function that has the same arity than the tuple.
             #[allow(unused_parens)]
-            impl< $( $x, )* Rets, RetsAsResult, T, Func >
-                HostFunction<T, ( $( $x ),* ), Rets>
+            impl< $( $x, )* Rets, RetsAsResult, S, T, Func >
+                HostFunction<S, T, ( $( $x ),* ), Rets>
             for
                 Func
             where
                 $( $x: FromToNativeWasmType, )*
                 Rets: WasmTypeList,
                 RetsAsResult: IntoResult<Rets>,
-                Func: Fn(ContextMut<'_, T>, $( $x , )*) -> RetsAsResult + 'static,
+                Func: Fn(ContextMut<'_, S, T>, $( $x , )*) -> RetsAsResult + 'static,
             {
                 #[allow(non_snake_case)]
                 fn function_body_ptr(self) -> *const VMFunctionBody {
                     /// This is a function that wraps the real host
                     /// function. Its address will be used inside the
                     /// runtime.
-                    unsafe extern "C" fn func_wrapper<T, $( $x, )* Rets, RetsAsResult, Func>( ctx_ptr: usize, $( $x: <$x::Native as NativeWasmType>::Abi, )* ) -> Rets::CStruct
+                    unsafe extern "C" fn func_wrapper<S, T, $( $x, )* Rets, RetsAsResult, Func>( ctx_ptr: usize, $( $x: <$x::Native as NativeWasmType>::Abi, )* ) -> Rets::CStruct
                     where
                         $( $x: FromToNativeWasmType, )*
                         Rets: WasmTypeList,
                         RetsAsResult: IntoResult<Rets>,
-                        Func: Fn(ContextMut<'_, T>, $( $x , )*) -> RetsAsResult + 'static,
+                        Func: Fn(ContextMut<'_, S, T>, $( $x , )*) -> RetsAsResult + 'static,
                     {
                         let func: &Func = &*(&() as *const () as *const Func);
-                        let mut ctx = ContextMut::from_raw(ctx_ptr as *mut ContextInner<T>);
-                        let mut ctx2 = ContextMut::from_raw(ctx_ptr as *mut ContextInner<T>);
+                        let mut ctx = ContextMut::from_raw(ctx_ptr as *mut ContextInner<S, T>);
+                        let mut ctx2 = ContextMut::from_raw(ctx_ptr as *mut ContextInner<S, T>);
 
                         let result = panic::catch_unwind(AssertUnwindSafe(|| {
                             func(ctx2.as_context_mut(), $( FromToNativeWasmType::from_native(NativeWasmTypeInto::from_abi(&mut ctx, $x)) ),* ).into_result()
@@ -991,7 +997,7 @@ mod inner {
                         }
                     }
 
-                    func_wrapper::< T, $( $x, )* Rets, RetsAsResult, Self > as *const VMFunctionBody
+                    func_wrapper::< S, T, $( $x, )* Rets, RetsAsResult, Self > as *const VMFunctionBody
                 }
             }
         };
