@@ -5,7 +5,7 @@ use wasmer_api::{Context, ContextMut};
 /// Opaque type representing a WebAssembly context.
 #[allow(non_camel_case_types)]
 pub struct wasm_context_t {
-    pub(crate) inner: Context<*mut c_void>,
+    pub(crate) inner: Context<(), *mut c_void>,
 }
 
 impl core::fmt::Debug for wasm_context_t {
@@ -27,7 +27,7 @@ pub unsafe extern "C" fn wasm_context_new(
     let store = store?;
 
     Some(Box::new(wasm_context_t {
-        inner: Context::new(&store.inner, data),
+        inner: Context::new(&store.inner, (), data),
     }))
 }
 
@@ -42,7 +42,7 @@ pub unsafe extern "C" fn wasm_context_delete(_context: Option<Box<wasm_context_t
 /// Opaque type representing a mut ref of a WebAssembly context.
 #[allow(non_camel_case_types)]
 pub struct wasm_context_ref_mut_t<'a> {
-    pub(crate) inner: ContextMut<'a, *mut c_void>,
+    pub(crate) inner: ContextMut<'a, (), *mut c_void>,
 }
 
 /// Get the value of `wasm_context_ref_mut_t` data.

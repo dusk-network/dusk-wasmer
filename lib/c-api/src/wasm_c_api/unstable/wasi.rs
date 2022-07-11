@@ -172,7 +172,7 @@ fn wasi_get_unordered_imports_inner(
     let version = c_try!(get_wasi_version(&module.inner, false)
         .ok_or("could not detect a WASI version on the given module"));
 
-    let inner = unsafe { ctx.inner.transmute_data::<wasmer_wasi::WasiEnv>() };
+    let inner = unsafe { ctx.inner.transmute_data::<wasmer_wasi::WasiEnv, ()>() };
     let import_object = generate_import_object_from_ctx(&mut inner.as_context_mut(), version);
 
     imports.set_buffer(
