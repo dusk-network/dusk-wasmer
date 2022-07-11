@@ -100,7 +100,7 @@ fn middleware_basic(mut config: crate::Config) -> Result<()> {
                     (local.get 1)))
 )"#;
     let module = Module::new(&store, wat).unwrap();
-    let mut ctx = WasmerContext::new(&store, ());
+    let mut ctx = WasmerContext::new(&store, (), ());
 
     let import_object = imports! {};
 
@@ -124,7 +124,7 @@ fn middleware_one_to_multi(mut config: crate::Config) -> Result<()> {
                     (local.get 1)))
 )"#;
     let module = Module::new(&store, wat).unwrap();
-    let mut ctx = WasmerContext::new(&store, ());
+    let mut ctx = WasmerContext::new(&store, (), ());
     let import_object = imports! {};
 
     let instance = Instance::new(&mut ctx, &module, &import_object)?;
@@ -148,7 +148,7 @@ fn middleware_multi_to_one(mut config: crate::Config) -> Result<()> {
            (i32.mul))
 )"#;
     let module = Module::new(&store, wat).unwrap();
-    let mut ctx = WasmerContext::new(&store, ());
+    let mut ctx = WasmerContext::new(&store, (), ());
     let import_object = imports! {};
 
     let instance = Instance::new(&mut ctx, &module, &import_object)?;
@@ -173,7 +173,7 @@ fn middleware_chain_order_1(mut config: crate::Config) -> Result<()> {
                     (local.get 1)))
 )"#;
     let module = Module::new(&store, wat).unwrap();
-    let mut ctx = WasmerContext::new(&store, ());
+    let mut ctx = WasmerContext::new(&store, (), ());
     let import_object = imports! {};
 
     let instance = Instance::new(&mut ctx, &module, &import_object)?;
@@ -197,7 +197,7 @@ fn middleware_chain_order_2(mut config: crate::Config) -> Result<()> {
                     (local.get 1)))
 )"#;
     let module = Module::new(&store, wat).unwrap();
-    let mut ctx = WasmerContext::new(&store, ());
+    let mut ctx = WasmerContext::new(&store, (), ());
     let import_object = imports! {};
 
     let instance = Instance::new(&mut ctx, &module, &import_object)?;

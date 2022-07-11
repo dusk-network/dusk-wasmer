@@ -54,7 +54,7 @@ fn test_deserialize(config: crate::Config) -> Result<()> {
         vec![Type::I32, Type::I64, Type::I32, Type::F32, Type::F64],
         vec![Type::I64],
     );
-    let mut ctx = WasmerContext::new(&store, ());
+    let mut ctx = WasmerContext::new(&store, (), ());
     let f0 = Function::new(&mut ctx, &func_type, |_ctx, params| {
         let param_0: i64 = params[0].unwrap_i32() as i64;
         let param_1: i64 = params[1].unwrap_i64() as i64;

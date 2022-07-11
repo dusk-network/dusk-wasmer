@@ -49,7 +49,7 @@ fn get_module(store: &Store) -> Result<Module> {
 fn dynamic_function(config: crate::Config) -> Result<()> {
     let store = config.store();
     let module = get_module(&store)?;
-    let mut ctx = WasmerContext::new(&store, ());
+    let mut ctx = WasmerContext::new(&store, (), ());
     static HITS: AtomicUsize = AtomicUsize::new(0);
     let imports = imports! {
         "host" => {
@@ -104,7 +104,7 @@ fn dynamic_function_with_env(config: crate::Config) -> Result<()> {
     let env: Env = Env {
         counter: Arc::new(AtomicUsize::new(0)),
     };
-    let mut ctx = WasmerContext::new(&store, env);
+    let mut ctx = WasmerContext::new(&store, (), env);
     let f0 = Function::new(
         &mut ctx,
         FunctionType::new(vec![], vec![]),
@@ -177,23 +177,23 @@ fn static_function(config: crate::Config) -> Result<()> {
     let module = get_module(&store)?;
 
     static HITS: AtomicUsize = AtomicUsize::new(0);
-    let mut ctx = WasmerContext::new(&store, ());
-    let f0 = Function::new_native(&mut ctx, |_ctx: ContextMut<_>| {
+    let mut ctx = WasmerContext::new(&store, (), ());
+    let f0 = Function::new_native(&mut ctx, |_ctx: ContextMut<_, _>| {
         assert_eq!(HITS.fetch_add(1, SeqCst), 0);
     });
-    let f1 = Function::new_native(&mut ctx, |_ctx: ContextMut<_>, x: i32| -> i32 {
+    let f1 = Function::new_native(&mut ctx, |_ctx: ContextMut<_, _>, x: i32| -> i32 {
         assert_eq!(x, 0);
         assert_eq!(HITS.fetch_add(1, SeqCst), 1);
         1
     });
-    let f2 = Function::new_native(&mut ctx, |_ctx: ContextMut<_>, x: i32, y: i64| {
+    let f2 = Function::new_native(&mut ctx, |_ctx: ContextMut<_, _>, x: i32, y: i64| {
         assert_eq!(x, 2);
         assert_eq!(y, 3);
         assert_eq!(HITS.fetch_add(1, SeqCst), 2);
     });
     let f3 = Function::new_native(
         &mut ctx,
-        |_ctx: ContextMut<_>, a: i32, b: i64, c: i32, d: f32, e: f64| {
+        |_ctx: ContextMut<_, _>, a: i32, b: i64, c: i32, d: f32, e: f64| {
             assert_eq!(a, 100);
             assert_eq!(b, 200);
             assert_eq!(c, 300);
@@ -225,26 +225,26 @@ fn static_function_with_results(config: crate::Config) -> Result<()> {
     let module = get_module(&store)?;
 
     static HITS: AtomicUsize = AtomicUsize::new(0);
-    let mut ctx = WasmerContext::new(&store, ());
-    let f0 = Function::new_native(&mut ctx, |_ctx: ContextMut<_>| {
+    let mut ctx = WasmerContext::new(&store, (), ());
+    let f0 = Function::new_native(&mut ctx, |_ctx: ContextMut<_, _>| {
         assert_eq!(HITS.fetch_add(1, SeqCst), 0);
     });
     let f1 = Function::new_native(
         &mut ctx,
-        |_ctx: ContextMut<_>, x: i32| -> Result<i32, Infallible> {
+        |_ctx: ContextMut<_, _>, x: i32| -> Result<i32, Infallible> {
             assert_eq!(x, 0);
             assert_eq!(HITS.fetch_add(1, SeqCst), 1);
             Ok(1)
         },
     );
-    let f2 = Function::new_native(&mut ctx, |_ctx: ContextMut<_>, x: i32, y: i64| {
+    let f2 = Function::new_native(&mut ctx, |_ctx: ContextMut<_, _>, x: i32, y: i64| {
         assert_eq!(x, 2);
         assert_eq!(y, 3);
         assert_eq!(HITS.fetch_add(1, SeqCst), 2);
     });
     let f3 = Function::new_native(
         &mut ctx,
-        |_ctx: ContextMut<_>, a: i32, b: i64, c: i32, d: f32, e: f64| {
+        |_ctx: ContextMut<_, _>, a: i32, b: i64, c: i32, d: f32, e: f64| {
             assert_eq!(a, 100);
             assert_eq!(b, 200);
             assert_eq!(c, 300);
@@ -285,23 +285,23 @@ fn static_function_with_env(config: crate::Config) -> Result<()> {
     }
 
     let env: Env = Env(Arc::new(AtomicUsize::new(0)));
-    let mut ctx = WasmerContext::new(&store, env);
-    let f0 = Function::new_native(&mut ctx, |ctx: ContextMut<Env>| {
+    let mut ctx = WasmerContext::new(&store, (), env);
+    let f0 = Function::new_native(&mut ctx, |ctx: ContextMut<_, Env>| {
         assert_eq!(ctx.data().fetch_add(1, SeqCst), 0);
     });
-    let f1 = Function::new_native(&mut ctx, |ctx: ContextMut<Env>, x: i32| -> i32 {
+    let f1 = Function::new_native(&mut ctx, |ctx: ContextMut<_, Env>, x: i32| -> i32 {
         assert_eq!(x, 0);
         assert_eq!(ctx.data().fetch_add(1, SeqCst), 1);
         1
     });
-    let f2 = Function::new_native(&mut ctx, |ctx: ContextMut<Env>, x: i32, y: i64| {
+    let f2 = Function::new_native(&mut ctx, |ctx: ContextMut<_, Env>, x: i32, y: i64| {
         assert_eq!(x, 2);
         assert_eq!(y, 3);
         assert_eq!(ctx.data().fetch_add(1, SeqCst), 2);
     });
     let f3 = Function::new_native(
         &mut ctx,
-        |ctx: ContextMut<Env>, a: i32, b: i64, c: i32, d: f32, e: f64| {
+        |ctx: ContextMut<_, Env>, a: i32, b: i64, c: i32, d: f32, e: f64| {
             assert_eq!(a, 100);
             assert_eq!(b, 200);
             assert_eq!(c, 300);
@@ -339,10 +339,10 @@ fn static_function_that_fails(config: crate::Config) -> Result<()> {
     "#;
 
     let module = Module::new(&store, &wat)?;
-    let mut ctx = WasmerContext::new(&store, ());
+    let mut ctx = WasmerContext::new(&store, (), ());
     let f0 = Function::new_native(
         &mut ctx,
-        |_ctx: ContextMut<_>| -> Result<Infallible, RuntimeError> {
+        |_ctx: ContextMut<_, _>| -> Result<Infallible, RuntimeError> {
             Err(RuntimeError::new("oops"))
         },
     );
@@ -394,7 +394,7 @@ fn dynamic_function_with_env_wasmer_env_init_works(config: crate::Config) -> Res
     }
 
     let env: Env = Env { memory: None };
-    let mut ctx = WasmerContext::new(&store, env);
+    let mut ctx = WasmerContext::new(&store, (), env);
     let f0 = Function::new(
         &mut ctx,
         FunctionType::new(vec![], vec![]),
@@ -439,8 +439,8 @@ fn multi_use_host_fn_manages_memory_correctly(config: crate::Config) -> Result<(
     }*/
 
     let env: Env = Env { memory: None };
-    let mut ctx = WasmerContext::new(&store, env);
-    fn host_fn(ctx: ContextMut<Env>) {
+    let mut ctx = WasmerContext::new(&store, (), env);
+    fn host_fn(ctx: ContextMut<(), Env>) {
         assert!(ctx.data().memory.is_some());
         println!("Hello, world!");
     }
@@ -471,7 +471,7 @@ fn multi_use_host_fn_manages_memory_correctly(config: crate::Config) -> Result<(
 #[compiler_test(imports)]
 fn instance_local_memory_lifetime(config: crate::Config) -> Result<()> {
     let store = config.store();
-    let mut ctx = WasmerContext::new(&store, ());
+    let mut ctx = WasmerContext::new(&store, (), ());
     let memory: Memory = {
         let wat = r#"(module
     (memory $mem 1)

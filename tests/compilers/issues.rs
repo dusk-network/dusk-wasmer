@@ -24,7 +24,7 @@ fn issue_2329(mut config: crate::Config) -> Result<()> {
         }
     }
 
-    pub fn read_memory(ctx: ContextMut<Env>, guest_ptr: u32) -> u32 {
+    pub fn read_memory(ctx: ContextMut<(), Env>, guest_ptr: u32) -> u32 {
         dbg!(ctx.data().memory.as_ref());
         dbg!(guest_ptr);
         0
@@ -61,7 +61,7 @@ fn issue_2329(mut config: crate::Config) -> Result<()> {
     "#;
     let module = Module::new(&store, wat)?;
     let env = Env::new();
-    let mut ctx = WasmerContext::new(&store, env);
+    let mut ctx = WasmerContext::new(&store, (), env);
     let imports: Imports = imports! {
         "env" => {
             "__read_memory" => Function::new_native(
@@ -88,7 +88,7 @@ fn call_with_static_data_pointers(mut config: crate::Config) -> Result<()> {
     }
 
     pub fn banana(
-        mut ctx: ContextMut<Env>,
+        mut ctx: ContextMut<(), Env>,
         a: u64,
         b: u64,
         c: u64,
@@ -107,17 +107,17 @@ fn call_with_static_data_pointers(mut config: crate::Config) -> Result<()> {
         0
     }
 
-    pub fn mango(ctx: ContextMut<Env>, a: u64) {}
+    pub fn mango(ctx: ContextMut<(), Env>, a: u64) {}
 
-    pub fn chaenomeles(ctx: ContextMut<Env>, a: u64) -> u64 {
+    pub fn chaenomeles(ctx: ContextMut<(), Env>, a: u64) -> u64 {
         0
     }
 
-    pub fn peach(ctx: ContextMut<Env>, a: u64, b: u64) -> u64 {
+    pub fn peach(ctx: ContextMut<(), Env>, a: u64, b: u64) -> u64 {
         0
     }
 
-    pub fn gas(ctx: ContextMut<Env>, a: u32) {}
+    pub fn gas(ctx: ContextMut<(), Env>, a: u32) {}
 
     let wat = r#"
     (module
@@ -187,7 +187,7 @@ fn call_with_static_data_pointers(mut config: crate::Config) -> Result<()> {
 
     let module = Module::new(&store, wat)?;
     let env = Env { memory: None };
-    let mut ctx = WasmerContext::new(&store, env);
+    let mut ctx = WasmerContext::new(&store, (), env);
     let memory = Memory::new(
         &mut ctx,
         MemoryType::new(Pages(1024), Some(Pages(2048)), false),
@@ -244,7 +244,7 @@ fn regression_gpr_exhaustion_for_calls(mut config: crate::Config) -> Result<()> 
             i32.const 0)
           (table (;0;) 1 1 funcref))
     "#;
-    let mut ctx = WasmerContext::new(&store, ());
+    let mut ctx = WasmerContext::new(&store, (), ());
     let module = Module::new(&store, wat)?;
     let imports: Imports = imports! {};
     let instance = Instance::new(&mut ctx, &module, &imports)?;
