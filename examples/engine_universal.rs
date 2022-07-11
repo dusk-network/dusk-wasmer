@@ -53,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create a store, that holds the engine.
     let store = Store::new_with_engine(&engine);
-    let mut ctx = Context::new(&store, ());
+    let mut ctx = Context::new(&store, (), ());
 
     println!("Compiling module...");
     // Here we go.

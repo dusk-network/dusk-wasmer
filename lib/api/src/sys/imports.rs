@@ -17,7 +17,7 @@ use wasmer_types::ImportError;
 /// # Usage:
 /// ```no_run
 /// use wasmer::{ContextMut, Exports, Module, Instance, imports, Imports, Function};
-/// # fn foo_test(mut ctx: ContextMut<()>, module: Module) {
+/// # fn foo_test(mut ctx: ContextMut<(), ()>, module: Module) {
 ///
 /// let host_fn = Function::new_native(&mut ctx, foo);
 /// let import_object: Imports = imports! {
@@ -28,7 +28,7 @@ use wasmer_types::ImportError;
 ///
 /// let instance = Instance::new(&mut ctx, &module, &import_object).expect("Could not instantiate module.");
 ///
-/// fn foo(_ctx: ContextMut<()>, n: i32) -> i32 {
+/// fn foo(_ctx: ContextMut<(), ()>, n: i32) -> i32 {
 ///     n
 /// }
 ///
@@ -99,9 +99,9 @@ impl Imports {
     /// ```no_run
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Default::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// use wasmer::{ContextMut, Imports, Function};
-    /// fn foo(_ctx: ContextMut<()>, n: i32) -> i32 {
+    /// fn foo(_ctx: ContextMut<(), ()>, n: i32) -> i32 {
     ///     n
     /// }
     /// let mut import_object = Imports::new();
@@ -213,7 +213,7 @@ impl fmt::Debug for Imports {
 /// # use wasmer::{ContextMut, Function, Store};
 /// # use wasmer::Context as WasmerContext;
 /// # let store = Store::default();
-/// # let mut ctx = WasmerContext::new(&store, ());
+/// # let mut ctx = WasmerContext::new(&store, (), ());
 /// use wasmer::imports;
 ///
 /// let import_object = imports! {
@@ -222,7 +222,7 @@ impl fmt::Debug for Imports {
 ///     },
 /// };
 ///
-/// fn foo(_ctx: ContextMut<()>, n: i32) -> i32 {
+/// fn foo(_ctx: ContextMut<(), ()>, n: i32) -> i32 {
 ///     n
 /// }
 /// ```
@@ -281,7 +281,7 @@ mod test {
     #[test]
     fn namespace() {
         let store = Store::default();
-        let mut ctx = WasmerContext::new(&store, ());
+        let mut ctx = WasmerContext::new(&store, (), ());
         let g1 = Global::new(&mut ctx, Value::I32(0));
         let namespace = namespace! {
             "happy" => g1
@@ -307,9 +307,9 @@ mod test {
         use crate::sys::Function;
 
         let store = Default::default();
-        let mut ctx = WasmerContext::new(&store, ());
+        let mut ctx = WasmerContext::new(&store, (), ());
 
-        fn func(_ctx: ContextMut<()>, arg: i32) -> i32 {
+        fn func(_ctx: ContextMut<(), ()>, arg: i32) -> i32 {
             arg + 1
         }
 
@@ -358,7 +358,7 @@ mod test {
     #[test]
     fn chaining_works() {
         let store = Store::default();
-        let mut ctx = WasmerContext::new(&store, ());
+        let mut ctx = WasmerContext::new(&store, (), ());
 
         let g = Global::new(&mut ctx, Value::I32(0));
 
@@ -391,7 +391,7 @@ mod test {
     #[test]
     fn extending_conflict_overwrites() {
         let store = Store::default();
-        let mut ctx = WasmerContext::new(&store, ());
+        let mut ctx = WasmerContext::new(&store, (), ());
         let g1 = Global::new(&mut ctx, Value::I32(0));
         let g2 = Global::new(&mut ctx, Value::I64(0));
 
@@ -420,7 +420,7 @@ mod test {
         */
         // now test it in reverse
         let store = Store::default();
-        let mut ctx = WasmerContext::new(&store, ());
+        let mut ctx = WasmerContext::new(&store, (), ());
         let g1 = Global::new(&mut ctx, Value::I32(0));
         let g2 = Global::new(&mut ctx, Value::I64(0));
 

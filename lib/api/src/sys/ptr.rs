@@ -24,7 +24,7 @@ pub type WasmPtr64<T> = WasmPtr<T, Memory64>;
 /// # use wasmer::Memory;
 /// # use wasmer::WasmPtr;
 /// # use wasmer::ContextMut;
-/// pub fn host_import(mut ctx: ContextMut<()>, memory: Memory, ptr: WasmPtr<u32>) {
+/// pub fn host_import(mut ctx: ContextMut<(), ()>, memory: Memory, ptr: WasmPtr<u32>) {
 ///     let derefed_ptr = ptr.deref(&mut ctx, &memory);
 ///     let inner_val: u32 = derefed_ptr.read().expect("pointer in bounds");
 ///     println!("Got {} from Wasm memory address 0x{:X}", inner_val, ptr.offset());
@@ -51,7 +51,7 @@ pub type WasmPtr64<T> = WasmPtr<T, Memory64>;
 ///     z: f32
 /// }
 ///
-/// fn update_vector_3(mut ctx: ContextMut<()>, memory: Memory, ptr: WasmPtr<V3>) {
+/// fn update_vector_3(mut ctx: ContextMut<(), ()>, memory: Memory, ptr: WasmPtr<V3>) {
 ///     let derefed_ptr = ptr.deref(&mut ctx, &memory);
 ///     let mut inner_val: V3 = derefed_ptr.read().expect("pointer in bounds");
 ///     println!("Got {:?} from Wasm memory address 0x{:X}", inner_val, ptr.offset());

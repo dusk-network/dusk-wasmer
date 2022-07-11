@@ -7,7 +7,7 @@ mod sys {
     #[test]
     fn exports_work_after_multiple_instances_have_been_freed() -> Result<()> {
         let store = Store::default();
-        let mut ctx = WasmerContext::new(&store, ());
+        let mut ctx = WasmerContext::new(&store, (), ());
         let module = Module::new(
             &store,
             "
@@ -51,13 +51,16 @@ mod sys {
             multiplier: u32,
         }
 
-        fn imported_fn(ctx: ContextMut<Env>, args: &[Value]) -> Result<Vec<Value>, RuntimeError> {
+        fn imported_fn(
+            ctx: ContextMut<(), Env>,
+            args: &[Value],
+        ) -> Result<Vec<Value>, RuntimeError> {
             let value = ctx.data().multiplier * args[0].unwrap_i32() as u32;
             Ok(vec![Value::I32(value as _)])
         }
 
         let env = Env { multiplier: 3 };
-        let mut ctx = WasmerContext::new(&store, env);
+        let mut ctx = WasmerContext::new(&store, (), env);
         let imported_signature = FunctionType::new(vec![Type::I32], vec![Type::I32]);
         let imported = Function::new(&mut ctx, imported_signature, imported_fn);
 

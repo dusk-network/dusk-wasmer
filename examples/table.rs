@@ -6,7 +6,7 @@ use wasmer_compiler::Universal;
 use wasmer_compiler_cranelift::Cranelift;
 
 /// A function we'll call through a table.
-fn host_callback(_ctx: ContextMut<()>, arg1: i32, arg2: i32) -> i32 {
+fn host_callback(_ctx: ContextMut<(), ()>, arg1: i32, arg2: i32) -> i32 {
     arg1 + arg2
 }
 
@@ -53,7 +53,7 @@ fn main() -> anyhow::Result<()> {
 
     // We set up our store with an engine and a compiler.
     let store = Store::new_with_engine(&Universal::new(Cranelift::default()).engine());
-    let mut ctx = Context::new(&store, ());
+    let mut ctx = Context::new(&store, (), ());
     // Then compile our Wasm.
     let module = Module::new(&store, wasm_bytes)?;
     let import_object = imports! {};

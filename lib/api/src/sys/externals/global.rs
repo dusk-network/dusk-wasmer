@@ -27,7 +27,7 @@ impl Global {
     /// # use wasmer::{Global, Mutability, Store, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
     /// let g = Global::new(&mut ctx, Value::I32(1));
     ///
@@ -46,7 +46,7 @@ impl Global {
     /// # use wasmer::{Global, Mutability, Store, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
     /// let g = Global::new_mut(&mut ctx, Value::I32(1));
     ///
@@ -89,7 +89,7 @@ impl Global {
     /// # use wasmer::{Global, Mutability, Store, Type, Value, GlobalType};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
     /// let c = Global::new(&mut ctx, Value::I32(1));
     /// let v = Global::new_mut(&mut ctx, Value::I64(1));
@@ -109,7 +109,7 @@ impl Global {
     /// # use wasmer::{Global, Store, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
     /// let g = Global::new(&mut ctx, Value::I32(1));
     ///
@@ -136,7 +136,7 @@ impl Global {
     /// # use wasmer::{Global, Store, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
     /// let g = Global::new_mut(&mut ctx, Value::I32(1));
     ///
@@ -155,7 +155,7 @@ impl Global {
     /// # use wasmer::{Global, Store, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
     /// let g = Global::new(&mut ctx, Value::I32(1));
     ///
@@ -168,7 +168,7 @@ impl Global {
     /// # use wasmer::{Global, Store, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
     /// let g = Global::new(&mut ctx, Value::I32(1));
     ///

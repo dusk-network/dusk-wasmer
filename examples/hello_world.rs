@@ -54,11 +54,11 @@ fn main() -> anyhow::Result<()> {
 
     // Next we'll set up our `Module` so that we can execute it. First, create
     // a `Context` in which to instantiate our `Module`.
-    let mut context = Context::new(&store, ());
+    let mut context = Context::new(&store, (), ());
 
     // We define a function to act as our "env" "say_hello" function imported in the
     // Wasm program above.
-    fn say_hello_world(_ctx: ContextMut<'_, ()>) {
+    fn say_hello_world(_ctx: ContextMut<'_, (), ()>) {
         println!("Hello, world!")
     }
 

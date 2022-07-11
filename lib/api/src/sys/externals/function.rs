@@ -53,7 +53,7 @@ impl Function {
     /// # use wasmer::{Function, FunctionType, Type, Store, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
     /// let signature = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
     ///
@@ -69,7 +69,7 @@ impl Function {
     /// # use wasmer::{Function, FunctionType, Type, Store, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
     /// const I32_I32_TO_I32: ([Type; 2], [Type; 1]) = ([Type::I32, Type::I32], [Type::I32]);
     ///
@@ -163,9 +163,9 @@ impl Function {
     /// # use wasmer::{ContextMut, Store, Function};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
-    /// fn sum(_ctx: ContextMut<()>, a: i32, b: i32) -> i32 {
+    /// fn sum(_ctx: ContextMut<(), ()>, a: i32, b: i32) -> i32 {
     ///     a + b
     /// }
     ///
@@ -219,9 +219,9 @@ impl Function {
     /// # use wasmer::{ContextMut, Function, Store, Type};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
-    /// fn sum(_ctx: ContextMut<()>, a: i32, b: i32) -> i32 {
+    /// fn sum(_ctx: ContextMut<(), ()>, a: i32, b: i32) -> i32 {
     ///     a + b
     /// }
     ///
@@ -320,9 +320,9 @@ impl Function {
     /// # use wasmer::{ContextMut, Function, Store, Type};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
-    /// fn sum(_ctx: ContextMut<()>, a: i32, b: i32) -> i32 {
+    /// fn sum(_ctx: ContextMut<(), ()>, a: i32, b: i32) -> i32 {
     ///     a + b
     /// }
     ///
@@ -342,9 +342,9 @@ impl Function {
     /// # use wasmer::{ContextMut, Function, Store, Type};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// #
-    /// fn sum(_ctx: ContextMut<()>, a: i32, b: i32) -> i32 {
+    /// fn sum(_ctx: ContextMut<(), ()>, a: i32, b: i32) -> i32 {
     ///     a + b
     /// }
     ///
@@ -370,7 +370,7 @@ impl Function {
     /// # use wasmer::{imports, wat2wasm, Function, Instance, Module, Store, Type, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// # let wasm_bytes = wat2wasm(r#"
     /// # (module
     /// #   (func (export "sum") (param $x i32) (param $y i32) (result i32)
@@ -442,7 +442,7 @@ impl Function {
     /// # use wasmer::{imports, wat2wasm, Function, Instance, Module, Store, Type, TypedFunction, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// # let wasm_bytes = wat2wasm(r#"
     /// # (module
     /// #   (func (export "sum") (param $x i32) (param $y i32) (result i32)
@@ -470,7 +470,7 @@ impl Function {
     /// # use wasmer::{imports, wat2wasm, Function, Instance, Module, Store, Type, TypedFunction, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// # let wasm_bytes = wat2wasm(r#"
     /// # (module
     /// #   (func (export "sum") (param $x i32) (param $y i32) (result i32)
@@ -496,7 +496,7 @@ impl Function {
     /// # use wasmer::{imports, wat2wasm, Function, Instance, Module, Store, Type, TypedFunction, Value};
     /// # use wasmer::Context as WasmerContext;
     /// # let store = Store::default();
-    /// # let mut ctx = WasmerContext::new(&store, ());
+    /// # let mut ctx = WasmerContext::new(&store, (), ());
     /// # let wasm_bytes = wat2wasm(r#"
     /// # (module
     /// #   (func (export "sum") (param $x i32) (param $y i32) (result i32)

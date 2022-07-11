@@ -77,10 +77,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Create the functions
-    fn get_counter(ctx: ContextMut<Env>) -> i32 {
+    fn get_counter(ctx: ContextMut<(), Env>) -> i32 {
         *ctx.data().counter.lock().unwrap()
     }
-    fn add_to_counter(mut ctx: ContextMut<Env>, add: i32) -> i32 {
+    fn add_to_counter(mut ctx: ContextMut<(), Env>, add: i32) -> i32 {
         let mut counter_ref = ctx.data_mut().counter.lock().unwrap();
 
         *counter_ref += add;
@@ -89,6 +89,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut ctx = Context::new(
         &store,
+        (),
         Env {
             counter: shared_counter.clone(),
         },

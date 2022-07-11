@@ -58,14 +58,14 @@ fn main() -> anyhow::Result<()> {
     // the default provided by Wasmer.
     // You can use `Store::default()` for that.
     let store = Store::new_with_engine(&Universal::new(Cranelift::default()).engine());
-    let mut ctx = Context::new(&store, ());
+    let mut ctx = Context::new(&store, (), ());
 
     println!("Compiling module...");
     // Let's compile the Wasm module.
     let module = Module::new(&store, wasm_bytes)?;
 
     // We declare the host function that we'll use to terminate execution.
-    fn early_exit(_ctx: ContextMut<()>) -> Result<(), ExitCode> {
+    fn early_exit(_ctx: ContextMut<(), ()>) -> Result<(), ExitCode> {
         // This is where it happens.
         Err(ExitCode(1))
     }

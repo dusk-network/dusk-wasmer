@@ -390,7 +390,7 @@ mod tests {
         compiler_config.push_middleware(metering);
         let store = Store::new_with_engine(&Universal::new(compiler_config).engine());
         let module = Module::new(&store, bytecode()).unwrap();
-        let mut ctx = Context::new(&store, ());
+        let mut ctx = Context::new(&store, (), ());
 
         // Instantiate
         let instance = Instance::new(&mut ctx, &module, &imports! {}).unwrap();
@@ -439,7 +439,7 @@ mod tests {
         compiler_config.push_middleware(metering);
         let store = Store::new_with_engine(&Universal::new(compiler_config).engine());
         let module = Module::new(&store, bytecode()).unwrap();
-        let mut ctx = Context::new(module.store(), ());
+        let mut ctx = Context::new(&store, (), ());
 
         // Instantiate
         let instance = Instance::new(&mut ctx, &module, &imports! {}).unwrap();

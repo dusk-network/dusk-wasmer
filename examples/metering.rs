@@ -71,7 +71,7 @@ fn main() -> anyhow::Result<()> {
     // We use our previously create compiler configuration
     // with the Universal engine.
     let store = Store::new_with_engine(&Universal::new(compiler_config).engine());
-    let mut ctx = Context::new(&store, ());
+    let mut ctx = Context::new(&store, (), ());
 
     println!("Compiling module...");
     // Let's compile the Wasm module.
