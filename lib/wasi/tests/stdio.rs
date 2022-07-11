@@ -81,7 +81,7 @@ fn test_stdout() {
         .unwrap();
 
     // Create a context state that will hold all objects created by this Instance
-    let mut ctx = Context::new(&store, wasi_env.clone());
+    let mut ctx = Context::new(&store, wasi_env.clone(), ());
 
     // Generate an `ImportObject`.
     let import_object = wasi_env
@@ -91,7 +91,7 @@ fn test_stdout() {
     // Let's instantiate the module with the imports.
     let instance = Instance::new(&mut ctx, &module, &import_object).unwrap();
     let memory = instance.exports.get_memory("memory").unwrap();
-    ctx.data_mut().set_memory(memory.clone());
+    ctx.state_mut().set_memory(memory.clone());
 
     // Let's call the `_start` function, which is our `main` function in Rust.
     let start = instance.exports.get_function("_start").unwrap();
@@ -129,7 +129,7 @@ fn test_env() {
         .unwrap();
 
     // Create a context state that will hold all objects created by this Instance
-    let mut ctx = Context::new(&store, wasi_env.clone());
+    let mut ctx = Context::new(&store, wasi_env.clone(), ());
 
     // Generate an `ImportObject`.
     let import_object = wasi_env
@@ -139,7 +139,7 @@ fn test_env() {
     // Let's instantiate the module with the imports.
     let instance = Instance::new(&mut ctx, &module, &import_object).unwrap();
     let memory = instance.exports.get_memory("memory").unwrap();
-    ctx.data_mut().set_memory(memory.clone());
+    ctx.state_mut().set_memory(memory.clone());
 
     // Let's call the `_start` function, which is our `main` function in Rust.
     let start = instance.exports.get_function("_start").unwrap();
@@ -167,7 +167,7 @@ fn test_stdin() {
     stdin.write(&buf[..]).unwrap();
 
     // Create a context state that will hold all objects created by this Instance
-    let mut ctx = Context::new(&store, wasi_env.clone());
+    let mut ctx = Context::new(&store, wasi_env.clone(), ());
 
     // Generate an `ImportObject`.
     let import_object = wasi_env
@@ -177,7 +177,7 @@ fn test_stdin() {
     // Let's instantiate the module with the imports.
     let instance = Instance::new(&mut ctx, &module, &import_object).unwrap();
     let memory = instance.exports.get_memory("memory").unwrap();
-    ctx.data_mut().set_memory(memory.clone());
+    ctx.state_mut().set_memory(memory.clone());
 
     // Let's call the `_start` function, which is our `main` function in Rust.
     let start = instance.exports.get_function("_start").unwrap();
