@@ -40,9 +40,9 @@ impl WasiPipe {
         (pipe1, pipe2)
     }
 
-    pub fn recv<M: MemorySize>(
+    pub fn recv<M: MemorySize, T>(
         &mut self,
-        ctx: &ContextMut<'_, WasiEnv, ()>,
+        ctx: &ContextMut<'_, WasiEnv, T>,
         memory: &Memory,
         iov: WasmSlice<__wasi_iovec_t<M>>,
     ) -> Result<usize, __wasi_errno_t> {
@@ -62,9 +62,9 @@ impl WasiPipe {
         }
     }
 
-    pub fn send<M: MemorySize>(
+    pub fn send<M: MemorySize, T>(
         &mut self,
-        ctx: &ContextMut<'_, WasiEnv, ()>,
+        ctx: &ContextMut<'_, WasiEnv, T>,
         memory: &Memory,
         iov: WasmSlice<__wasi_ciovec_t<M>>,
     ) -> Result<usize, __wasi_errno_t> {

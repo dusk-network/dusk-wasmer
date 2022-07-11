@@ -9,8 +9,8 @@ use wasmer::{AsContextMut, ContextMut, WasmPtr};
 /// WARNING: this function involves saving, clobbering, and restoring unrelated
 /// Wasm memory.  If the memory clobbered by the current syscall is also used by
 /// that syscall, then it may break.
-pub fn fd_filestat_get(
-    mut ctx: ContextMut<'_, WasiEnv, ()>,
+pub fn fd_filestat_get<T>(
+    mut ctx: ContextMut<'_, WasiEnv, T>,
     fd: types::__wasi_fd_t,
     buf: WasmPtr<snapshot0::__wasi_filestat_t, Memory32>,
 ) -> types::__wasi_errno_t {
@@ -27,7 +27,7 @@ pub fn fd_filestat_get(
 
     // Set up complete, make the call with the pointer that will write to the
     // struct and some unrelated memory after the struct.
-    let result = syscalls::fd_filestat_get::<Memory32>(ctx.as_context_mut(), fd, new_buf);
+    let result = syscalls::fd_filestat_get::<Memory32, T>(ctx.as_context_mut(), fd, new_buf);
 
     // reborrow memory
     let env = ctx.state();
@@ -60,8 +60,8 @@ pub fn fd_filestat_get(
 
 /// Wrapper around `syscalls::path_filestat_get` with extra logic to handle the size
 /// difference of `wasi_filestat_t`
-pub fn path_filestat_get(
-    mut ctx: ContextMut<'_, WasiEnv, ()>,
+pub fn path_filestat_get<T>(
+    mut ctx: ContextMut<'_, WasiEnv, T>,
     fd: types::__wasi_fd_t,
     flags: types::__wasi_lookupflags_t,
     path: WasmPtr<u8, Memory32>,
@@ -75,7 +75,7 @@ pub fn path_filestat_get(
     let new_buf: WasmPtr<types::__wasi_filestat_t, Memory32> = buf.cast();
     let new_filestat_setup: types::__wasi_filestat_t = wasi_try_mem!(new_buf.read(&ctx, memory));
 
-    let result = syscalls::path_filestat_get::<Memory32>(
+    let result = syscalls::path_filestat_get::<Memory32, T>(
         ctx.as_context_mut(),
         fd,
         flags,
@@ -107,8 +107,8 @@ pub fn path_filestat_get(
 
 /// Wrapper around `syscalls::fd_seek` with extra logic to remap the values
 /// of `__wasi_whence_t`
-pub fn fd_seek(
-    ctx: ContextMut<'_, WasiEnv, ()>,
+pub fn fd_seek<T>(
+    ctx: ContextMut<'_, WasiEnv, T>,
     fd: types::__wasi_fd_t,
     offset: types::__wasi_filedelta_t,
     whence: snapshot0::__wasi_whence_t,
@@ -121,13 +121,13 @@ pub fn fd_seek(
         // if it's invalid, let the new fd_seek handle it
         _ => whence,
     };
-    syscalls::fd_seek::<Memory32>(ctx, fd, offset, new_whence, newoffset)
+    syscalls::fd_seek::<Memory32, T>(ctx, fd, offset, new_whence, newoffset)
 }
 
 /// Wrapper around `syscalls::poll_oneoff` with extra logic to add the removed
 /// userdata field back
-pub fn poll_oneoff(
-    mut ctx: ContextMut<'_, WasiEnv, ()>,
+pub fn poll_oneoff<T>(
+    mut ctx: ContextMut<'_, WasiEnv, T>,
     in_: WasmPtr<snapshot0::__wasi_subscription_t, Memory32>,
     out_: WasmPtr<types::__wasi_event_t, Memory32>,
     nsubscriptions: u32,
@@ -172,7 +172,7 @@ pub fn poll_oneoff(
     }
 
     // make the call
-    let result = syscalls::poll_oneoff::<Memory32>(
+    let result = syscalls::poll_oneoff::<Memory32, T>(
         ctx.as_context_mut(),
         in_new_type_ptr,
         out_,

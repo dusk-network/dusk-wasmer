@@ -767,9 +767,9 @@ impl InodeSocket {
         }
     }
 
-    pub fn send<M: MemorySize>(
+    pub fn send<M: MemorySize, T>(
         &mut self,
-        ctx: &ContextMut<'_, WasiEnv, ()>,
+        ctx: &ContextMut<'_, WasiEnv, T>,
         memory: &Memory,
         iov: WasmSlice<__wasi_ciovec_t<M>>,
     ) -> Result<usize, __wasi_errno_t> {
@@ -817,7 +817,7 @@ impl InodeSocket {
         .map(|_| buf_len)
     }
 
-    pub fn send_bytes<M: MemorySize>(&mut self, buf: Bytes) -> Result<usize, __wasi_errno_t> {
+    pub fn send_bytes<M: MemorySize, T>(&mut self, buf: Bytes) -> Result<usize, __wasi_errno_t> {
         let buf_len = buf.len();
         match &mut self.kind {
             InodeSocketKind::HttpRequest(sock, ty) => {
@@ -852,9 +852,9 @@ impl InodeSocket {
         .map(|_| buf_len)
     }
 
-    pub fn send_to<M: MemorySize>(
+    pub fn send_to<M: MemorySize, T>(
         &mut self,
-        ctx: &ContextMut<'_, WasiEnv, ()>,
+        ctx: &ContextMut<'_, WasiEnv, T>,
         memory: &Memory,
         iov: WasmSlice<__wasi_ciovec_t<M>>,
         addr: WasmPtr<__wasi_addr_port_t, M>,
@@ -883,9 +883,9 @@ impl InodeSocket {
         .map(|_| buf_len)
     }
 
-    pub fn recv<M: MemorySize>(
+    pub fn recv<M: MemorySize, T>(
         &mut self,
-        ctx: &ContextMut<'_, WasiEnv, ()>,
+        ctx: &ContextMut<'_, WasiEnv, T>,
         memory: &Memory,
         iov: WasmSlice<__wasi_iovec_t<M>>,
     ) -> Result<usize, __wasi_errno_t> {
@@ -953,9 +953,9 @@ impl InodeSocket {
         }
     }
 
-    pub fn recv_from<M: MemorySize>(
+    pub fn recv_from<M: MemorySize, T>(
         &mut self,
-        ctx: &ContextMut<'_, WasiEnv, ()>,
+        ctx: &ContextMut<'_, WasiEnv, T>,
         memory: &Memory,
         iov: WasmSlice<__wasi_iovec_t<M>>,
         addr: WasmPtr<__wasi_addr_port_t, M>,
@@ -1134,8 +1134,8 @@ impl Drop for InodeSocket {
 }
 
 #[allow(dead_code)]
-pub(crate) fn read_ip<M: MemorySize>(
-    ctx: &ContextMut<'_, WasiEnv, ()>,
+pub(crate) fn read_ip<M: MemorySize, T>(
+    ctx: &ContextMut<'_, WasiEnv, T>,
     memory: &Memory,
     ptr: WasmPtr<__wasi_addr_t, M>,
 ) -> Result<IpAddr, __wasi_errno_t> {
@@ -1153,8 +1153,8 @@ pub(crate) fn read_ip<M: MemorySize>(
     })
 }
 
-pub(crate) fn read_ip_v4<M: MemorySize>(
-    ctx: &ContextMut<'_, WasiEnv, ()>,
+pub(crate) fn read_ip_v4<M: MemorySize, T>(
+    ctx: &ContextMut<'_, WasiEnv, T>,
     memory: &Memory,
     ptr: WasmPtr<__wasi_addr_ip4_t, M>,
 ) -> Result<Ipv4Addr, __wasi_errno_t> {
@@ -1165,8 +1165,8 @@ pub(crate) fn read_ip_v4<M: MemorySize>(
     Ok(Ipv4Addr::new(o[0], o[1], o[2], o[3]))
 }
 
-pub(crate) fn read_ip_v6<M: MemorySize>(
-    ctx: &ContextMut<'_, WasiEnv, ()>,
+pub(crate) fn read_ip_v6<M: MemorySize, T>(
+    ctx: &ContextMut<'_, WasiEnv, T>,
     memory: &Memory,
     ptr: WasmPtr<__wasi_addr_ip6_t, M>,
 ) -> Result<Ipv6Addr, __wasi_errno_t> {
@@ -1177,8 +1177,8 @@ pub(crate) fn read_ip_v6<M: MemorySize>(
     Ok(Ipv6Addr::new(a, b, c, d, e, f, g, h))
 }
 
-pub(crate) fn write_ip<M: MemorySize>(
-    ctx: &ContextMut<'_, WasiEnv, ()>,
+pub(crate) fn write_ip<M: MemorySize, T>(
+    ctx: &ContextMut<'_, WasiEnv, T>,
     memory: &Memory,
     ptr: WasmPtr<__wasi_addr_t, M>,
     ip: IpAddr,
@@ -1208,8 +1208,8 @@ pub(crate) fn write_ip<M: MemorySize>(
 }
 
 #[allow(dead_code)]
-pub(crate) fn read_cidr<M: MemorySize>(
-    ctx: &ContextMut<'_, WasiEnv, ()>,
+pub(crate) fn read_cidr<M: MemorySize, T>(
+    ctx: &ContextMut<'_, WasiEnv, T>,
     memory: &Memory,
     ptr: WasmPtr<__wasi_cidr_t, M>,
 ) -> Result<IpCidr, __wasi_errno_t> {
@@ -1240,8 +1240,8 @@ pub(crate) fn read_cidr<M: MemorySize>(
 }
 
 #[allow(dead_code)]
-pub(crate) fn write_cidr<M: MemorySize>(
-    ctx: &ContextMut<'_, WasiEnv, ()>,
+pub(crate) fn write_cidr<M: MemorySize, T>(
+    ctx: &ContextMut<'_, WasiEnv, T>,
     memory: &Memory,
     ptr: WasmPtr<__wasi_cidr_t, M>,
     cidr: IpCidr,
@@ -1278,8 +1278,8 @@ pub(crate) fn write_cidr<M: MemorySize>(
     Ok(())
 }
 
-pub(crate) fn read_ip_port<M: MemorySize>(
-    ctx: &ContextMut<'_, WasiEnv, ()>,
+pub(crate) fn read_ip_port<M: MemorySize, T>(
+    ctx: &ContextMut<'_, WasiEnv, T>,
     memory: &Memory,
     ptr: WasmPtr<__wasi_addr_port_t, M>,
 ) -> Result<(IpAddr, u16), __wasi_errno_t> {
@@ -1310,8 +1310,8 @@ pub(crate) fn read_ip_port<M: MemorySize>(
 }
 
 #[allow(dead_code)]
-pub(crate) fn write_ip_port<M: MemorySize>(
-    ctx: &ContextMut<'_, WasiEnv, ()>,
+pub(crate) fn write_ip_port<M: MemorySize, T>(
+    ctx: &ContextMut<'_, WasiEnv, T>,
     memory: &Memory,
     ptr: WasmPtr<__wasi_addr_port_t, M>,
     ip: IpAddr,
@@ -1350,8 +1350,8 @@ pub(crate) fn write_ip_port<M: MemorySize>(
 }
 
 #[allow(dead_code)]
-pub(crate) fn read_route<M: MemorySize>(
-    ctx: &ContextMut<'_, WasiEnv, ()>,
+pub(crate) fn read_route<M: MemorySize, T>(
+    ctx: &ContextMut<'_, WasiEnv, T>,
     memory: &Memory,
     ptr: WasmPtr<__wasi_route_t, M>,
 ) -> Result<IpRoute, __wasi_errno_t> {
@@ -1406,8 +1406,8 @@ pub(crate) fn read_route<M: MemorySize>(
     })
 }
 
-pub(crate) fn write_route<M: MemorySize>(
-    ctx: &ContextMut<'_, WasiEnv, ()>,
+pub(crate) fn write_route<M: MemorySize, T>(
+    ctx: &ContextMut<'_, WasiEnv, T>,
     memory: &Memory,
     ptr: WasmPtr<__wasi_route_t, M>,
     route: IpRoute,

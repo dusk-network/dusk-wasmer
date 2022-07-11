@@ -230,9 +230,9 @@ impl WasiEnv {
     }
 
     /// Get an `Imports` for a specific version of WASI detected in the module.
-    pub fn import_object(
+    pub fn import_object<T: 'static>(
         &mut self,
-        ctx: &mut ContextMut<'_, WasiEnv, ()>,
+        ctx: &mut ContextMut<'_, WasiEnv, T>,
         module: &Module,
     ) -> Result<Imports, WasiError> {
         let wasi_version = get_wasi_version(module, false).ok_or(WasiError::UnknownWasiVersion)?;
@@ -241,9 +241,9 @@ impl WasiEnv {
 
     /// Like `import_object` but containing all the WASI versions detected in
     /// the module.
-    pub fn import_object_for_all_wasi_versions(
+    pub fn import_object_for_all_wasi_versions<T: 'static>(
         &mut self,
-        ctx: &mut ContextMut<'_, WasiEnv, ()>,
+        ctx: &mut ContextMut<'_, WasiEnv, T>,
         module: &Module,
     ) -> Result<Imports, WasiError> {
         let wasi_versions =
@@ -357,8 +357,8 @@ impl WasiEnv {
 }
 
 /// Create an [`Imports`]  from a [`Context`]
-pub fn generate_import_object_from_ctx(
-    ctx: &mut ContextMut<'_, WasiEnv, ()>,
+pub fn generate_import_object_from_ctx<T: 'static>(
+    ctx: &mut ContextMut<'_, WasiEnv, T>,
     version: WasiVersion,
 ) -> Imports {
     match version {
@@ -369,108 +369,110 @@ pub fn generate_import_object_from_ctx(
     }
 }
 
-fn wasi_unstable_exports(ctx: &mut ContextMut<'_, WasiEnv, ()>) -> Exports {
+fn wasi_unstable_exports<T: 'static>(ctx: &mut ContextMut<'_, WasiEnv, T>) -> Exports {
     let namespace = namespace! {
-        "args_get" => Function::new_native(ctx, args_get::<Memory32>),
-        "args_sizes_get" => Function::new_native(ctx, args_sizes_get::<Memory32>),
-        "clock_res_get" => Function::new_native(ctx, clock_res_get::<Memory32>),
-        "clock_time_get" => Function::new_native(ctx, clock_time_get::<Memory32>),
-        "environ_get" => Function::new_native(ctx, environ_get::<Memory32>),
-        "environ_sizes_get" => Function::new_native(ctx, environ_sizes_get::<Memory32>),
+        "args_get" => Function::new_native(ctx, args_get::<Memory32, T>),
+        "args_sizes_get" => Function::new_native(ctx, args_sizes_get::<Memory32, T>),
+        "clock_res_get" => Function::new_native(ctx, clock_res_get::<Memory32, T>),
+        "clock_time_get" => Function::new_native(ctx, clock_time_get::<Memory32, T>),
+        "environ_get" => Function::new_native(ctx, environ_get::<Memory32, T>),
+        "environ_sizes_get" => Function::new_native(ctx, environ_sizes_get::<Memory32, T>),
         "fd_advise" => Function::new_native(ctx, fd_advise),
         "fd_allocate" => Function::new_native(ctx, fd_allocate),
         "fd_close" => Function::new_native(ctx, fd_close),
         "fd_datasync" => Function::new_native(ctx, fd_datasync),
-        "fd_fdstat_get" => Function::new_native(ctx, fd_fdstat_get::<Memory32>),
+        "fd_fdstat_get" => Function::new_native(ctx, fd_fdstat_get::<Memory32, T>),
         "fd_fdstat_set_flags" => Function::new_native(ctx, fd_fdstat_set_flags),
         "fd_fdstat_set_rights" => Function::new_native(ctx, fd_fdstat_set_rights),
         "fd_filestat_get" => Function::new_native(ctx, legacy::snapshot0::fd_filestat_get),
         "fd_filestat_set_size" => Function::new_native(ctx, fd_filestat_set_size),
         "fd_filestat_set_times" => Function::new_native(ctx, fd_filestat_set_times),
-        "fd_pread" => Function::new_native(ctx, fd_pread::<Memory32>),
-        "fd_prestat_get" => Function::new_native(ctx, fd_prestat_get::<Memory32>),
-        "fd_prestat_dir_name" => Function::new_native(ctx, fd_prestat_dir_name::<Memory32>),
-        "fd_pwrite" => Function::new_native(ctx, fd_pwrite::<Memory32>),
-        "fd_read" => Function::new_native(ctx, fd_read::<Memory32>),
-        "fd_readdir" => Function::new_native(ctx, fd_readdir::<Memory32>),
+        "fd_pread" => Function::new_native(ctx, fd_pread::<Memory32, T>),
+        "fd_prestat_get" => Function::new_native(ctx, fd_prestat_get::<Memory32, T>),
+        "fd_prestat_dir_name" => Function::new_native(ctx, fd_prestat_dir_name::<Memory32, T>),
+        "fd_pwrite" => Function::new_native(ctx, fd_pwrite::<Memory32, T>),
+        "fd_read" => Function::new_native(ctx, fd_read::<Memory32, T>),
+        "fd_readdir" => Function::new_native(ctx, fd_readdir::<Memory32, T>),
         "fd_renumber" => Function::new_native(ctx, fd_renumber),
         "fd_seek" => Function::new_native(ctx, legacy::snapshot0::fd_seek),
         "fd_sync" => Function::new_native(ctx, fd_sync),
-        "fd_tell" => Function::new_native(ctx, fd_tell::<Memory32>),
-        "fd_write" => Function::new_native(ctx, fd_write::<Memory32>),
-        "path_create_directory" => Function::new_native(ctx, path_create_directory::<Memory32>),
+        "fd_tell" => Function::new_native(ctx, fd_tell::<Memory32, T>),
+        "fd_write" => Function::new_native(ctx, fd_write::<Memory32, T>),
+        "path_create_directory" => Function::new_native(ctx, path_create_directory::<Memory32, T>),
         "path_filestat_get" => Function::new_native(ctx, legacy::snapshot0::path_filestat_get),
-        "path_filestat_set_times" => Function::new_native(ctx, path_filestat_set_times::<Memory32>),
-        "path_link" => Function::new_native(ctx, path_link::<Memory32>),
-        "path_open" => Function::new_native(ctx, path_open::<Memory32>),
-        "path_readlink" => Function::new_native(ctx, path_readlink::<Memory32>),
-        "path_remove_directory" => Function::new_native(ctx, path_remove_directory::<Memory32>),
-        "path_rename" => Function::new_native(ctx, path_rename::<Memory32>),
-        "path_symlink" => Function::new_native(ctx, path_symlink::<Memory32>),
-        "path_unlink_file" => Function::new_native(ctx, path_unlink_file::<Memory32>),
+        "path_filestat_set_times" => Function::new_native(ctx, path_filestat_set_times::<Memory32, T>),
+        "path_link" => Function::new_native(ctx, path_link::<Memory32, T>),
+        "path_open" => Function::new_native(ctx, path_open::<Memory32, T>),
+        "path_readlink" => Function::new_native(ctx, path_readlink::<Memory32, T>),
+        "path_remove_directory" => Function::new_native(ctx, path_remove_directory::<Memory32, T>),
+        "path_rename" => Function::new_native(ctx, path_rename::<Memory32, T>),
+        "path_symlink" => Function::new_native(ctx, path_symlink::<Memory32, T>),
+        "path_unlink_file" => Function::new_native(ctx, path_unlink_file::<Memory32, T>),
         "poll_oneoff" => Function::new_native(ctx, legacy::snapshot0::poll_oneoff),
         "proc_exit" => Function::new_native(ctx, proc_exit),
         "proc_raise" => Function::new_native(ctx, proc_raise),
-        "random_get" => Function::new_native(ctx, random_get::<Memory32>),
+        "random_get" => Function::new_native(ctx, random_get::<Memory32, T>),
         "sched_yield" => Function::new_native(ctx, sched_yield),
-        "sock_recv" => Function::new_native(ctx, sock_recv::<Memory32>),
-        "sock_send" => Function::new_native(ctx, sock_send::<Memory32>),
+        "sock_recv" => Function::new_native(ctx, sock_recv::<Memory32, T>),
+        "sock_send" => Function::new_native(ctx, sock_send::<Memory32, T>),
         "sock_shutdown" => Function::new_native(ctx, sock_shutdown),
     };
     namespace
 }
 
-fn wasi_snapshot_preview1_exports(ctx: &mut ContextMut<'_, WasiEnv, ()>) -> Exports {
+fn wasi_snapshot_preview1_exports<T: 'static>(ctx: &mut ContextMut<'_, WasiEnv, T>) -> Exports {
     let namespace = namespace! {
-        "args_get" => Function::new_native(ctx, args_get::<Memory32>),
-        "args_sizes_get" => Function::new_native(ctx, args_sizes_get::<Memory32>),
-        "clock_res_get" => Function::new_native(ctx, clock_res_get::<Memory32>),
-        "clock_time_get" => Function::new_native(ctx, clock_time_get::<Memory32>),
-        "environ_get" => Function::new_native(ctx, environ_get::<Memory32>),
-        "environ_sizes_get" => Function::new_native(ctx, environ_sizes_get::<Memory32>),
+        "args_get" => Function::new_native(ctx, args_get::<Memory32, T>),
+        "args_sizes_get" => Function::new_native(ctx, args_sizes_get::<Memory32, T>),
+        "clock_res_get" => Function::new_native(ctx, clock_res_get::<Memory32, T>),
+        "clock_time_get" => Function::new_native(ctx, clock_time_get::<Memory32, T>),
+        "environ_get" => Function::new_native(ctx, environ_get::<Memory32, T>),
+        "environ_sizes_get" => Function::new_native(ctx, environ_sizes_get::<Memory32, T>),
         "fd_advise" => Function::new_native(ctx, fd_advise),
         "fd_allocate" => Function::new_native(ctx, fd_allocate),
         "fd_close" => Function::new_native(ctx, fd_close),
         "fd_datasync" => Function::new_native(ctx, fd_datasync),
-        "fd_fdstat_get" => Function::new_native(ctx, fd_fdstat_get::<Memory32>),
+        "fd_fdstat_get" => Function::new_native(ctx, fd_fdstat_get::<Memory32, T>),
         "fd_fdstat_set_flags" => Function::new_native(ctx, fd_fdstat_set_flags),
         "fd_fdstat_set_rights" => Function::new_native(ctx, fd_fdstat_set_rights),
-        "fd_filestat_get" => Function::new_native(ctx, fd_filestat_get::<Memory32>),
+        "fd_filestat_get" => Function::new_native(ctx, fd_filestat_get::<Memory32, T>),
         "fd_filestat_set_size" => Function::new_native(ctx, fd_filestat_set_size),
         "fd_filestat_set_times" => Function::new_native(ctx, fd_filestat_set_times),
-        "fd_pread" => Function::new_native(ctx, fd_pread::<Memory32>),
-        "fd_prestat_get" => Function::new_native(ctx, fd_prestat_get::<Memory32>),
-        "fd_prestat_dir_name" => Function::new_native(ctx, fd_prestat_dir_name::<Memory32>),
-        "fd_pwrite" => Function::new_native(ctx, fd_pwrite::<Memory32>),
-        "fd_read" => Function::new_native(ctx, fd_read::<Memory32>),
-        "fd_readdir" => Function::new_native(ctx, fd_readdir::<Memory32>),
+        "fd_pread" => Function::new_native(ctx, fd_pread::<Memory32, T>),
+        "fd_prestat_get" => Function::new_native(ctx, fd_prestat_get::<Memory32, T>),
+        "fd_prestat_dir_name" => Function::new_native(ctx, fd_prestat_dir_name::<Memory32, T>),
+        "fd_pwrite" => Function::new_native(ctx, fd_pwrite::<Memory32, T>),
+        "fd_read" => Function::new_native(ctx, fd_read::<Memory32, T>),
+        "fd_readdir" => Function::new_native(ctx, fd_readdir::<Memory32, T>),
         "fd_renumber" => Function::new_native(ctx, fd_renumber),
-        "fd_seek" => Function::new_native(ctx, fd_seek::<Memory32>),
+        "fd_seek" => Function::new_native(ctx, fd_seek::<Memory32, T>),
         "fd_sync" => Function::new_native(ctx, fd_sync),
-        "fd_tell" => Function::new_native(ctx, fd_tell::<Memory32>),
-        "fd_write" => Function::new_native(ctx, fd_write::<Memory32>),
-        "path_create_directory" => Function::new_native(ctx, path_create_directory::<Memory32>),
-        "path_filestat_get" => Function::new_native(ctx, path_filestat_get::<Memory32>),
-        "path_filestat_set_times" => Function::new_native(ctx, path_filestat_set_times::<Memory32>),
-        "path_link" => Function::new_native(ctx, path_link::<Memory32>),
-        "path_open" => Function::new_native(ctx, path_open::<Memory32>),
-        "path_readlink" => Function::new_native(ctx, path_readlink::<Memory32>),
-        "path_remove_directory" => Function::new_native(ctx, path_remove_directory::<Memory32>),
-        "path_rename" => Function::new_native(ctx, path_rename::<Memory32>),
-        "path_symlink" => Function::new_native(ctx, path_symlink::<Memory32>),
-        "path_unlink_file" => Function::new_native(ctx, path_unlink_file::<Memory32>),
-        "poll_oneoff" => Function::new_native(ctx, poll_oneoff::<Memory32>),
+        "fd_tell" => Function::new_native(ctx, fd_tell::<Memory32, T>),
+        "fd_write" => Function::new_native(ctx, fd_write::<Memory32, T>),
+        "path_create_directory" => Function::new_native(ctx, path_create_directory::<Memory32, T>),
+        "path_filestat_get" => Function::new_native(ctx, path_filestat_get::<Memory32, T>),
+        "path_filestat_set_times" => Function::new_native(ctx, path_filestat_set_times::<Memory32, T>),
+        "path_link" => Function::new_native(ctx, path_link::<Memory32, T>),
+        "path_open" => Function::new_native(ctx, path_open::<Memory32, T>),
+        "path_readlink" => Function::new_native(ctx, path_readlink::<Memory32, T>),
+        "path_remove_directory" => Function::new_native(ctx, path_remove_directory::<Memory32, T>),
+        "path_rename" => Function::new_native(ctx, path_rename::<Memory32, T>),
+        "path_symlink" => Function::new_native(ctx, path_symlink::<Memory32, T>),
+        "path_unlink_file" => Function::new_native(ctx, path_unlink_file::<Memory32, T>),
+        "poll_oneoff" => Function::new_native(ctx, poll_oneoff::<Memory32, T>),
         "proc_exit" => Function::new_native(ctx, proc_exit),
         "proc_raise" => Function::new_native(ctx, proc_raise),
-        "random_get" => Function::new_native(ctx, random_get::<Memory32>),
+        "random_get" => Function::new_native(ctx, random_get::<Memory32, T>),
         "sched_yield" => Function::new_native(ctx, sched_yield),
-        "sock_recv" => Function::new_native(ctx, sock_recv::<Memory32>),
-        "sock_send" => Function::new_native(ctx, sock_send::<Memory32>),
+        "sock_recv" => Function::new_native(ctx, sock_recv::<Memory32, T>),
+        "sock_send" => Function::new_native(ctx, sock_send::<Memory32, T>),
         "sock_shutdown" => Function::new_native(ctx, sock_shutdown),
     };
     namespace
 }
-pub fn import_object_for_all_wasi_versions(ctx: &mut ContextMut<'_, WasiEnv, ()>) -> Imports {
+pub fn import_object_for_all_wasi_versions<T: 'static>(
+    ctx: &mut ContextMut<'_, WasiEnv, T>,
+) -> Imports {
     let wasi_unstable_exports = wasi_unstable_exports(ctx);
     let wasi_snapshot_preview1_exports = wasi_snapshot_preview1_exports(ctx);
     imports! {
@@ -480,14 +482,14 @@ pub fn import_object_for_all_wasi_versions(ctx: &mut ContextMut<'_, WasiEnv, ()>
 }
 
 /// Combines a state generating function with the import list for legacy WASI
-fn generate_import_object_snapshot0(ctx: &mut ContextMut<'_, WasiEnv, ()>) -> Imports {
+fn generate_import_object_snapshot0<T: 'static>(ctx: &mut ContextMut<'_, WasiEnv, T>) -> Imports {
     let wasi_unstable_exports = wasi_unstable_exports(ctx);
     imports! {
         "wasi_unstable" => wasi_unstable_exports
     }
 }
 
-fn generate_import_object_snapshot1(ctx: &mut ContextMut<'_, WasiEnv, ()>) -> Imports {
+fn generate_import_object_snapshot1<T: 'static>(ctx: &mut ContextMut<'_, WasiEnv, T>) -> Imports {
     let wasi_snapshot_preview1_exports = wasi_snapshot_preview1_exports(ctx);
     imports! {
         "wasi_snapshot_preview1" => wasi_snapshot_preview1_exports
@@ -495,7 +497,7 @@ fn generate_import_object_snapshot1(ctx: &mut ContextMut<'_, WasiEnv, ()>) -> Im
 }
 
 /// Combines a state generating function with the import list for snapshot 1
-fn generate_import_object_wasix32_v1(ctx: &mut ContextMut<'_, WasiEnv, ()>) -> Imports {
+fn generate_import_object_wasix32_v1<T: 'static>(ctx: &mut ContextMut<'_, WasiEnv, T>) -> Imports {
     use self::wasix32::*;
     imports! {
         "wasix_32v1" => {
@@ -610,7 +612,7 @@ fn generate_import_object_wasix32_v1(ctx: &mut ContextMut<'_, WasiEnv, ()>) -> I
     }
 }
 
-fn generate_import_object_wasix64_v1(ctx: &mut ContextMut<'_, WasiEnv, ()>) -> Imports {
+fn generate_import_object_wasix64_v1<T: 'static>(ctx: &mut ContextMut<'_, WasiEnv, T>) -> Imports {
     use self::wasix64::*;
     imports! {
         "wasix_64v1" => {
