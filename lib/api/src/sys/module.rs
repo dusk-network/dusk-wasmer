@@ -279,12 +279,17 @@ impl Module {
     pub(crate) fn instantiate(
         &self,
         resolver: &dyn Resolver,
+        snapshot_id: usize,
     ) -> Result<InstanceHandle, InstantiationError> {
         unsafe {
+            use std::path::PathBuf;
+            let path = PathBuf::from(format!("/tmp/VMMEM{}", snapshot_id));
+            let should_initialize_memories= !path.exists();
             let instance_handle = self.artifact.instantiate(
                 self.store.tunables(),
                 resolver,
                 Box::new(self.clone()),
+                snapshot_id,
             )?;
 
             // After the instance handle is created, we need to initialize
@@ -293,7 +298,7 @@ impl Module {
             // as some of the Instance elements may have placed in other
             // instance tables.
             self.artifact
-                .finish_instantiation(&self.store, &instance_handle)?;
+                .finish_instantiation(&self.store, &instance_handle, should_initialize_memories)?;
 
             Ok(instance_handle)
         }

@@ -46,7 +46,7 @@ impl Mmap {
         let page_size = region::page::size();
         let rounded_size = round_up_to_page_size(size, page_size);
         println!("with_at_last {} rounded {}", size, rounded_size);
-        Self::accessible_reserved(rounded_size, rounded_size)
+        Self::accessible_reserved(rounded_size, rounded_size, 0)
     }
 
     /// Create a new `Mmap` pointing to `accessible_size` bytes of page-aligned accessible memory,
@@ -56,6 +56,7 @@ impl Mmap {
     pub fn accessible_reserved(
         accessible_size: usize,
         mapping_size: usize,
+        snapshot_id: usize,
     ) -> Result<Self, String> {
         let page_size = region::page::size();
         assert_le!(accessible_size, mapping_size);
@@ -81,7 +82,8 @@ impl Mmap {
             .create(!path_exists1)
             .open(&path1).map_err(|e|e.to_string())?;
         let raw_fd1: RawFd = file1.as_raw_fd();
-        let path2 = PathBuf::from("/Users/miloszm/rust/hatchery/VMMEM2");
+
+        let path2 = PathBuf::from(format!("/tmp/VMMEM{}", snapshot_id));
         let path_exists2 = path2.exists();
         let file2 = OpenOptions::new()
             // .append(true)
@@ -90,6 +92,7 @@ impl Mmap {
             .create(!path_exists2)
             .open(&path2).map_err(|e|e.to_string())?;
         let raw_fd2: RawFd = file2.as_raw_fd();
+
         if accessible_size == mapping_size {
             file1.set_len(mapping_size as u64).map_err(|e|e.to_string())?;
         } else {

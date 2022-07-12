@@ -65,6 +65,9 @@ pub(crate) struct Instance {
     /// The `ModuleInfo` this `Instance` was instantiated from.
     module: Arc<ModuleInfo>,
 
+    /// Snapshot id
+    snapshot_id: usize,
+
     /// Offsets in the `vmctx` region.
     offsets: VMOffsets,
 
@@ -901,6 +904,7 @@ impl InstanceHandle {
     pub unsafe fn new(
         allocator: InstanceAllocator,
         module: Arc<ModuleInfo>,
+        snapshot_id: usize,
         finished_functions: BoxedSlice<LocalFunctionIndex, FunctionBodyPtr>,
         finished_function_call_trampolines: BoxedSlice<SignatureIndex, VMTrampoline>,
         finished_memories: BoxedSlice<LocalMemoryIndex, Arc<dyn Memory>>,
@@ -925,6 +929,7 @@ impl InstanceHandle {
             // Create the `Instance`. The unique, the One.
             let instance = Instance {
                 module,
+                snapshot_id,
                 offsets,
                 memories: finished_memories,
                 tables: finished_tables,
@@ -1020,12 +1025,16 @@ impl InstanceHandle {
         &self,
         trap_handler: &(dyn TrapHandler + 'static),
         data_initializers: &[DataInitializer<'_>],
+        should_initialize_memories: bool,
     ) -> Result<(), Trap> {
         let instance = self.instance().as_ref();
 
         // Apply the initializers.
         initialize_tables(instance)?;
-        initialize_memories(instance, data_initializers)?;
+
+        if should_initialize_memories {
+            initialize_memories(instance, data_initializers)?;
+        }
 
         // The WebAssembly spec specifies that the start function is
         // invoked automatically at instantiation time.

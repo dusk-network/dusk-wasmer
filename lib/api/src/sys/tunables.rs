@@ -99,7 +99,7 @@ impl Tunables for BaseTunables {
         ty: &MemoryType,
         style: &MemoryStyle,
     ) -> Result<Arc<dyn Memory>, MemoryError> {
-        Ok(Arc::new(LinearMemory::new(ty, style)?))
+        Ok(Arc::new(LinearMemory::new(ty, style, 0)?))
     }
 
     /// Create a memory owned by the VM given a [`MemoryType`] and a [`MemoryStyle`].
@@ -112,12 +112,14 @@ impl Tunables for BaseTunables {
         ty: &MemoryType,
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
+        snapshot_id: usize,
     ) -> Result<Arc<dyn Memory>, MemoryError> {
         println!("Tunables: create_vm_memory - start");
         let x = Arc::new(LinearMemory::from_definition(
             ty,
             style,
             vm_definition_location,
+            snapshot_id
         )?);
         println!("Tunables: create_vm_memory - end");
         Ok(x)

@@ -58,6 +58,7 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
         tunables: &dyn Tunables,
         resolver: &dyn Resolver,
         host_state: Box<dyn Any>,
+        snapshot_id: usize,
     ) -> Result<InstanceHandle, InstantiationError> {
         // Validate the CPU features this module was compiled with against the
         // host CPU features.
@@ -96,7 +97,7 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
             InstanceAllocator::new(&*module);
         println!("Artifact: instantiate - before create memories");
         let finished_memories = tunables
-            .create_memories(&module, self.memory_styles(), &memory_definition_locations)
+            .create_memories(&module, self.memory_styles(), &memory_definition_locations, snapshot_id)
             .map_err(InstantiationError::Link)?
             .into_boxed_slice();
         let finished_tables = tunables
@@ -113,6 +114,7 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
         let handle = InstanceHandle::new(
             allocator,
             module,
+            snapshot_id,
             self.finished_functions().clone(),
             self.finished_function_call_trampolines().clone(),
             finished_memories,
@@ -136,6 +138,7 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
         &self,
         trap_handler: &(dyn TrapHandler + 'static),
         handle: &InstanceHandle,
+        should_initialize_memories: bool,
     ) -> Result<(), InstantiationError> {
         let data_initializers = self
             .data_initializers()
@@ -146,7 +149,7 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
             })
             .collect::<Vec<_>>();
         handle
-            .finish_instantiation(trap_handler, &data_initializers)
+            .finish_instantiation(trap_handler, &data_initializers, should_initialize_memories)
             .map_err(|trap| InstantiationError::Start(RuntimeError::from_trap(trap)))
     }
 }
