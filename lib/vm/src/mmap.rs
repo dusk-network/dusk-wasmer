@@ -69,35 +69,20 @@ impl Mmap {
             return Ok(Self::new());
         }
 
+
+        use std::os::unix::io::AsRawFd;
         use std::fs::OpenOptions;
         use std::path::PathBuf;
         // #[cfg(unix)]
-        use std::os::unix::io::{AsRawFd, RawFd};
-        let path1 = PathBuf::from("/Users/miloszm/rust/hatchery/VMMEM1");
-        let path_exists1 = path1.exists();
-        let file1 = OpenOptions::new()
-            // .append(true)
+        let path = PathBuf::from(format!("/tmp/VMMEM{}", snapshot_id));
+        let path_exists = path.exists();
+        let file = OpenOptions::new()
             .read(true)
             .write(true)
-            .create(!path_exists1)
-            .open(&path1).map_err(|e|e.to_string())?;
-        let raw_fd1: RawFd = file1.as_raw_fd();
+            .create(!path_exists)
+            .open(&path).map_err(|e| e.to_string())?;
+        file.set_len(accessible_size as u64).map_err(|e|e.to_string())?;
 
-        let path2 = PathBuf::from(format!("/tmp/VMMEM{}", snapshot_id));
-        let path_exists2 = path2.exists();
-        let file2 = OpenOptions::new()
-            // .append(true)
-            .read(true)
-            .write(true)
-            .create(!path_exists2)
-            .open(&path2).map_err(|e|e.to_string())?;
-        let raw_fd2: RawFd = file2.as_raw_fd();
-
-        if accessible_size == mapping_size {
-            file1.set_len(mapping_size as u64).map_err(|e|e.to_string())?;
-        } else {
-            file2.set_len(accessible_size as u64).map_err(|e|e.to_string())?;
-        }
         println!("Mmap: accessible_reserved - mapping size {}, accessible size {}", mapping_size, accessible_size);
         Ok(if accessible_size == mapping_size {
             // Allocate a single read-write region at once.
@@ -106,8 +91,8 @@ impl Mmap {
                     ptr::null_mut(),
                     mapping_size,
                     libc::PROT_READ | libc::PROT_WRITE,
-                    libc::MAP_SHARED,
-                    raw_fd1,
+                    libc::MAP_PRIVATE | libc::MAP_ANON,
+                    -1,
                     0,
                 )
             };
@@ -124,10 +109,10 @@ impl Mmap {
             let ptr = unsafe {
                 libc::mmap(
                     ptr::null_mut(),
-                    mapping_size, //accessible_size,
+                    mapping_size,
                     libc::PROT_NONE,
-                    /*libc::MAP_PRIVATE | libc::MAP_ANON,*/ libc::MAP_SHARED,
-                    /*-1,*/ raw_fd2,
+                    if snapshot_id != 0 { libc::MAP_SHARED } else {libc::MAP_PRIVATE | libc::MAP_ANON},
+                    if snapshot_id != 0 { file.as_raw_fd() } else { -1 },
                     0,
                 )
             };
