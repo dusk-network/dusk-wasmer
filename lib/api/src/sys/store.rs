@@ -2,6 +2,7 @@ use crate::sys::tunables::BaseTunables;
 use loupe::MemoryUsage;
 use std::fmt;
 use std::sync::{Arc, RwLock};
+use std::path::{Path, PathBuf};
 #[cfg(all(feature = "compiler", feature = "engine"))]
 use wasmer_compiler::CompilerConfig;
 use wasmer_engine::{Engine, Tunables};
@@ -23,15 +24,23 @@ pub struct Store {
     tunables: Arc<dyn Tunables + Send + Sync>,
     #[loupe(skip)]
     trap_handler: Arc<RwLock<Option<Box<TrapHandlerFn>>>>,
+    path: PathBuf
 }
 
 impl Store {
     /// Creates a new `Store` with a specific [`Engine`].
-    pub fn new<E>(engine: &E) -> Self
+    pub fn new<E>(engine: &E, path: &Path) -> Self
     where
         E: Engine + ?Sized,
     {
-        Self::new_with_tunables(engine, BaseTunables::for_target(engine.target()))
+        Self::new_with_tunables(engine, BaseTunables::for_target(engine.target()), path)
+    }
+
+    /// Creates a new store with a specific path
+    pub fn new_with_path(path: &Path) -> Self {
+        let mut store = Store::default();
+        store.path = path.into();
+        store
     }
 
     /// Set the trap handler in this store.
@@ -41,7 +50,7 @@ impl Store {
     }
 
     /// Creates a new `Store` with a specific [`Engine`] and [`Tunables`].
-    pub fn new_with_tunables<E>(engine: &E, tunables: impl Tunables + Send + Sync + 'static) -> Self
+    pub fn new_with_tunables<E>(engine: &E, tunables: impl Tunables + Send + Sync + 'static, path: &Path) -> Self
     where
         E: Engine + ?Sized,
     {
@@ -53,6 +62,7 @@ impl Store {
             engine: engine.cloned(),
             tunables: Arc::new(tunables),
             trap_handler: Arc::new(RwLock::new(None)),
+            path: path.into()
         }
     }
 
@@ -71,6 +81,11 @@ impl Store {
     /// tunables are excluded from the logic.
     pub fn same(a: &Self, b: &Self) -> bool {
         a.engine.id() == b.engine.id()
+    }
+
+    /// Returns store path
+    pub fn path(&self) -> &Path {
+        self.path.as_path()
     }
 }
 
@@ -135,7 +150,7 @@ impl Default for Store {
         let config = get_config();
         let engine = get_engine(config);
         let tunables = BaseTunables::for_target(engine.target());
-        Self::new_with_tunables(&engine, tunables)
+        Self::new_with_tunables(&engine, tunables, PathBuf::new().as_path())
     }
 }
 

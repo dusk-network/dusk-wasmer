@@ -2,6 +2,7 @@ use crate::sys::{MemoryType, Pages, TableType};
 use loupe::MemoryUsage;
 use std::ptr::NonNull;
 use std::sync::Arc;
+use std::path::Path;
 use target_lexicon::PointerWidth;
 use wasmer_compiler::Target;
 use wasmer_engine::Tunables;
@@ -99,7 +100,7 @@ impl Tunables for BaseTunables {
         ty: &MemoryType,
         style: &MemoryStyle,
     ) -> Result<Arc<dyn Memory>, MemoryError> {
-        Ok(Arc::new(LinearMemory::new(ty, style, 0)?))
+        Ok(Arc::new(LinearMemory::new(ty, style)?))
     }
 
     /// Create a memory owned by the VM given a [`MemoryType`] and a [`MemoryStyle`].
@@ -112,14 +113,14 @@ impl Tunables for BaseTunables {
         ty: &MemoryType,
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
-        snapshot_id: usize,
+        path: &Path,
     ) -> Result<Arc<dyn Memory>, MemoryError> {
         println!("Tunables: create_vm_memory - start");
         let x = Arc::new(LinearMemory::from_definition(
             ty,
             style,
             vm_definition_location,
-            snapshot_id
+            path
         )?);
         println!("Tunables: create_vm_memory - end");
         Ok(x)

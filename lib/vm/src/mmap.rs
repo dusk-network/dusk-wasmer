@@ -10,6 +10,9 @@ use more_asserts::assert_lt;
 use std::io;
 use std::ptr;
 use std::slice;
+use std::os::unix::io::AsRawFd;
+use std::fs::{File, OpenOptions};
+use std::path::{Path, PathBuf};
 
 /// Round `size` up to the nearest multiple of `page_size`.
 fn round_up_to_page_size(size: usize, page_size: usize) -> usize {
@@ -46,7 +49,7 @@ impl Mmap {
         let page_size = region::page::size();
         let rounded_size = round_up_to_page_size(size, page_size);
         println!("with_at_last {} rounded {}", size, rounded_size);
-        Self::accessible_reserved(rounded_size, rounded_size, 0)
+        Self::accessible_reserved(rounded_size, rounded_size, None)
     }
 
     /// Create a new `Mmap` pointing to `accessible_size` bytes of page-aligned accessible memory,
@@ -56,7 +59,7 @@ impl Mmap {
     pub fn accessible_reserved(
         accessible_size: usize,
         mapping_size: usize,
-        snapshot_id: usize,
+        path: Option<&Path>,
     ) -> Result<Self, String> {
         let page_size = region::page::size();
         assert_le!(accessible_size, mapping_size);
@@ -69,19 +72,15 @@ impl Mmap {
             return Ok(Self::new());
         }
 
-
-        use std::os::unix::io::AsRawFd;
-        use std::fs::OpenOptions;
-        use std::path::PathBuf;
-        // #[cfg(unix)]
-        let path = PathBuf::from(format!("/tmp/VMMEM{}", snapshot_id));
-        let path_exists = path.exists();
-        let file = OpenOptions::new()
+        let unused_path = Path::new("/tmp/VM01"); // todo! fix it
+        let file_path = path.unwrap_or(unused_path);
+        println!("path={:?}", file_path);
+        let f = OpenOptions::new()
             .read(true)
             .write(true)
-            .create(!path_exists)
-            .open(&path).map_err(|e| e.to_string())?;
-        file.set_len(accessible_size as u64).map_err(|e|e.to_string())?;
+            .create(!file_path.exists())
+            .open(file_path).map_err(|e| e.to_string())?;
+        f.set_len(accessible_size as u64).map_err(|e|e.to_string())?;
 
         println!("Mmap: accessible_reserved - mapping size {}, accessible size {}", mapping_size, accessible_size);
         Ok(if accessible_size == mapping_size {
@@ -111,8 +110,8 @@ impl Mmap {
                     ptr::null_mut(),
                     mapping_size,
                     libc::PROT_NONE,
-                    if snapshot_id != 0 { libc::MAP_SHARED } else {libc::MAP_PRIVATE | libc::MAP_ANON},
-                    if snapshot_id != 0 { file.as_raw_fd() } else { -1 },
+                    if path.is_some() { libc::MAP_SHARED } else {libc::MAP_PRIVATE | libc::MAP_ANON},
+                    if path.is_some(){ f.as_raw_fd() } else { -1 },
                     0,
                 )
             };

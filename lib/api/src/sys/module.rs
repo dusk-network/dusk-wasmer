@@ -279,17 +279,15 @@ impl Module {
     pub(crate) fn instantiate(
         &self,
         resolver: &dyn Resolver,
-        snapshot_id: usize,
     ) -> Result<InstanceHandle, InstantiationError> {
         unsafe {
-            use std::path::PathBuf;
-            let path = PathBuf::from(format!("/tmp/VMMEM{}", snapshot_id));
+            let path = self.store.path();
             let should_initialize_memories= !path.exists();
             let instance_handle = self.artifact.instantiate(
                 self.store.tunables(),
                 resolver,
                 Box::new(self.clone()),
-                snapshot_id,
+                path,
             )?;
 
             // After the instance handle is created, we need to initialize

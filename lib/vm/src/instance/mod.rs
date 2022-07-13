@@ -65,9 +65,6 @@ pub(crate) struct Instance {
     /// The `ModuleInfo` this `Instance` was instantiated from.
     module: Arc<ModuleInfo>,
 
-    /// Snapshot id
-    snapshot_id: usize,
-
     /// Offsets in the `vmctx` region.
     offsets: VMOffsets,
 
@@ -904,7 +901,6 @@ impl InstanceHandle {
     pub unsafe fn new(
         allocator: InstanceAllocator,
         module: Arc<ModuleInfo>,
-        snapshot_id: usize,
         finished_functions: BoxedSlice<LocalFunctionIndex, FunctionBodyPtr>,
         finished_function_call_trampolines: BoxedSlice<SignatureIndex, VMTrampoline>,
         finished_memories: BoxedSlice<LocalMemoryIndex, Arc<dyn Memory>>,
@@ -929,7 +925,6 @@ impl InstanceHandle {
             // Create the `Instance`. The unique, the One.
             let instance = Instance {
                 module,
-                snapshot_id,
                 offsets,
                 memories: finished_memories,
                 tables: finished_tables,

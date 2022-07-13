@@ -2,6 +2,7 @@ use crate::error::LinkError;
 use loupe::MemoryUsage;
 use std::ptr::NonNull;
 use std::sync::Arc;
+use std::path::Path;
 use wasmer_types::entity::{EntityRef, PrimaryMap};
 use wasmer_types::{
     GlobalType, LocalGlobalIndex, LocalMemoryIndex, LocalTableIndex, MemoryIndex, MemoryType,
@@ -37,7 +38,7 @@ pub trait Tunables: MemoryUsage {
         ty: &MemoryType,
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
-        snapshot_id: usize,
+        path: &Path,
     ) -> Result<Arc<dyn Memory>, MemoryError>;
 
     /// Create a table owned by the host given a [`TableType`] and a [`TableStyle`].
@@ -69,7 +70,7 @@ pub trait Tunables: MemoryUsage {
         module: &ModuleInfo,
         memory_styles: &PrimaryMap<MemoryIndex, MemoryStyle>,
         memory_definition_locations: &[NonNull<VMMemoryDefinition>],
-        snapshot_id: usize,
+        path: &Path,
     ) -> Result<PrimaryMap<LocalMemoryIndex, Arc<dyn Memory>>, LinkError> {
         println!("Tunables: create_memories, module id {:?}", module.id);
         let num_imports = module.num_imported_memories;
@@ -81,7 +82,7 @@ pub trait Tunables: MemoryUsage {
             let style = &memory_styles[mi];
             let mdl = memory_definition_locations[index];
             memories.push(
-                self.create_vm_memory(ty, style, mdl, snapshot_id)
+                self.create_vm_memory(ty, style, mdl, path)
                     .map_err(|e| LinkError::Resource(format!("Failed to create memory: {}", e)))?,
             );
         }

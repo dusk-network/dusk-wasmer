@@ -121,10 +121,9 @@ impl Instance {
     pub fn new(
         module: &Module,
         resolver: &(dyn Resolver + Send + Sync),
-        snapshot_id: usize,
     ) -> Result<Self, InstantiationError> {
         let store = module.store();
-        let handle = module.instantiate(resolver, snapshot_id)?;
+        let handle = module.instantiate(resolver)?;
         let exports = module
             .exports()
             .map(|export| {

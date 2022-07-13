@@ -1,6 +1,7 @@
 use crate::{resolve_imports, InstantiationError, Resolver, RuntimeError, Tunables};
 use loupe::MemoryUsage;
 use std::any::Any;
+use std::path::Path;
 pub use wasmer_artifact::MetadataHeader;
 use wasmer_artifact::{ArtifactCreate, Upcastable};
 use wasmer_compiler::CpuFeature;
@@ -58,7 +59,7 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
         tunables: &dyn Tunables,
         resolver: &dyn Resolver,
         host_state: Box<dyn Any>,
-        snapshot_id: usize,
+        path: &Path,
     ) -> Result<InstanceHandle, InstantiationError> {
         // Validate the CPU features this module was compiled with against the
         // host CPU features.
@@ -97,7 +98,7 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
             InstanceAllocator::new(&*module);
         println!("Artifact: instantiate - before create memories");
         let finished_memories = tunables
-            .create_memories(&module, self.memory_styles(), &memory_definition_locations, snapshot_id)
+            .create_memories(&module, self.memory_styles(), &memory_definition_locations, path)
             .map_err(InstantiationError::Link)?
             .into_boxed_slice();
         let finished_tables = tunables
@@ -114,7 +115,6 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
         let handle = InstanceHandle::new(
             allocator,
             module,
-            snapshot_id,
             self.finished_functions().clone(),
             self.finished_function_call_trampolines().clone(),
             finished_memories,
