@@ -72,7 +72,6 @@ impl UniversalArtifact {
             table_styles,
         )?;
 
-        println!("UniversalArtifact: new");
         Self::from_parts(&mut inner_engine, artifact)
     }
 
@@ -104,7 +103,6 @@ impl UniversalArtifact {
         let serializable = SerializableModule::deserialize(metadata_slice)?;
         let artifact = UniversalArtifactBuild::from_serializable(serializable);
         let mut inner_engine = engine.inner_mut();
-        println!("UniversalArtifact: deserialize");
         Self::from_parts(&mut inner_engine, artifact).map_err(DeserializeError::Compiler)
     }
 
@@ -113,7 +111,6 @@ impl UniversalArtifact {
         engine_inner: &mut UniversalEngineInner,
         artifact: UniversalArtifactBuild,
     ) -> Result<Self, CompileError> {
-        println!("UniversalArtifact: from_parts");
         let (
             finished_functions,
             finished_function_call_trampolines,

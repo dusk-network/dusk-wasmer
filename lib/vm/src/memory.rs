@@ -147,7 +147,6 @@ impl LinearMemory {
     /// This creates a `LinearMemory` with owned metadata: this can be used to create a memory
     /// that will be imported into Wasm modules.
     pub fn new(memory: &MemoryType, style: &MemoryStyle) -> Result<Self, MemoryError> {
-        println!("LinearMemory new");
         unsafe { Self::new_internal(memory, style, None, None) }
     }
 
@@ -164,7 +163,6 @@ impl LinearMemory {
         vm_memory_location: NonNull<VMMemoryDefinition>,
         path: &Path,
     ) -> Result<Self, MemoryError> {
-        println!("LinearMemory from_definition");
         Self::new_internal(memory, style, Some(vm_memory_location), Some(path))
     }
 
@@ -222,7 +220,6 @@ impl LinearMemory {
         let mapped_pages = memory.minimum;
         let mapped_bytes = mapped_pages.bytes();
 
-        println!("LinearMemory: new_internal {} {} {:?} base={:?} current_len={:?}", mapped_bytes.0, request_bytes, vm_memory_location, vm_memory_location.unwrap().as_ref().base, vm_memory_location.unwrap().as_ref().current_length);
         let mut mmap = WasmMmap {
             alloc: Mmap::accessible_reserved(mapped_bytes.0, request_bytes, path)
                 .map_err(MemoryError::Region)?,

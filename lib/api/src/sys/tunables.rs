@@ -115,15 +115,12 @@ impl Tunables for BaseTunables {
         vm_definition_location: NonNull<VMMemoryDefinition>,
         path: &Path,
     ) -> Result<Arc<dyn Memory>, MemoryError> {
-        println!("Tunables: create_vm_memory - start");
-        let x = Arc::new(LinearMemory::from_definition(
+        Ok(Arc::new(LinearMemory::from_definition(
             ty,
             style,
             vm_definition_location,
             path
-        )?);
-        println!("Tunables: create_vm_memory - end");
-        Ok(x)
+        )?))
     }
 
     /// Create a table owned by the host given a [`TableType`] and a [`TableStyle`].

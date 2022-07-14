@@ -115,7 +115,6 @@ impl Engine for UniversalEngine {
         binary: &[u8],
         tunables: &dyn Tunables,
     ) -> Result<Arc<dyn Artifact>, CompileError> {
-        println!("Engine: compile");
         Ok(Arc::new(UniversalArtifact::new(&self, binary, tunables)?))
     }
 
@@ -212,7 +211,6 @@ impl UniversalEngineInner {
             .partition(|section| section.protection == CustomSectionProtection::ReadExecute);
         self.code_memory.push(CodeMemory::new());
 
-        println!("UniversalEngineInner: allocate");
         let (mut allocated_functions, allocated_executable_sections, allocated_data_sections) =
             self.code_memory
                 .last_mut()

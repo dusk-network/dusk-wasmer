@@ -80,7 +80,6 @@ impl CodeMemory {
 
         // 2. Allocate the pages. Mark them all read-write.
 
-        println!("CodeMemory: allocate {}", total_len);
         self.mmap = Mmap::with_at_least(total_len)?;
 
         // 3. Determine where the pointers to each function, executable section

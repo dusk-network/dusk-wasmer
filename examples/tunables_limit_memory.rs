@@ -102,12 +102,11 @@ impl<T: Tunables> Tunables for LimitingTunables<T> {
         ty: &MemoryType,
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
-        snapshot_id: usize,
     ) -> Result<Arc<dyn vm::Memory>, MemoryError> {
         let adjusted = self.adjust_memory(ty);
         self.validate_memory(&adjusted)?;
         self.base
-            .create_vm_memory(&adjusted, style, vm_definition_location, snapshot_id)
+            .create_vm_memory(&adjusted, style, vm_definition_location)
     }
 
     /// Create a table owned by the host given a [`TableType`] and a [`TableStyle`].

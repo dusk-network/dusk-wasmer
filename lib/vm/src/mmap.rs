@@ -48,7 +48,6 @@ impl Mmap {
     pub fn with_at_least(size: usize) -> Result<Self, String> {
         let page_size = region::page::size();
         let rounded_size = round_up_to_page_size(size, page_size);
-        println!("with_at_last {} rounded {}", size, rounded_size);
         Self::accessible_reserved(rounded_size, rounded_size, None)
     }
 
@@ -74,7 +73,6 @@ impl Mmap {
 
         let unused_path = Path::new("/tmp/VM01"); // todo! fix it
         let file_path = path.unwrap_or(unused_path);
-        println!("path={:?}", file_path);
         match file_path.parent(){
             Some(p) => std::fs::create_dir_all(p).map_err(|e| e.to_string())?,
             None => ()
@@ -88,10 +86,6 @@ impl Mmap {
         f.set_len(accessible_size as u64)
             .map_err(|e| e.to_string())?;
 
-        println!(
-            "Mmap: accessible_reserved - mapping size {}, accessible size {}",
-            mapping_size, accessible_size
-        );
         Ok(if accessible_size == mapping_size {
             // Allocate a single read-write region at once.
             let ptr = unsafe {
