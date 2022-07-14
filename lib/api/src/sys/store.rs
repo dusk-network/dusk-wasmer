@@ -29,11 +29,11 @@ pub struct Store {
 
 impl Store {
     /// Creates a new `Store` with a specific [`Engine`].
-    pub fn new<E>(engine: &E, path: &Path) -> Self
+    pub fn new<E>(engine: &E) -> Self
     where
         E: Engine + ?Sized,
     {
-        Self::new_with_tunables(engine, BaseTunables::for_target(engine.target()), path)
+        Self::new_with_tunables(engine, BaseTunables::for_target(engine.target()), PathBuf::new().as_path())
     }
 
     /// Creates a new store with a specific path
