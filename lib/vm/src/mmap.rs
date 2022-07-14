@@ -7,12 +7,12 @@
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use more_asserts::assert_le;
 use more_asserts::assert_lt;
+use std::fs::OpenOptions;
 use std::io;
+use std::os::unix::io::AsRawFd;
+use std::path::Path;
 use std::ptr;
 use std::slice;
-use std::os::unix::io::AsRawFd;
-use std::fs::{File, OpenOptions};
-use std::path::{Path, PathBuf};
 
 /// Round `size` up to the nearest multiple of `page_size`.
 fn round_up_to_page_size(size: usize, page_size: usize) -> usize {
@@ -75,14 +75,23 @@ impl Mmap {
         let unused_path = Path::new("/tmp/VM01"); // todo! fix it
         let file_path = path.unwrap_or(unused_path);
         println!("path={:?}", file_path);
+        match file_path.parent(){
+            Some(p) => std::fs::create_dir_all(p).map_err(|e| e.to_string())?,
+            None => ()
+        }
         let f = OpenOptions::new()
             .read(true)
             .write(true)
             .create(!file_path.exists())
-            .open(file_path).map_err(|e| e.to_string())?;
-        f.set_len(accessible_size as u64).map_err(|e|e.to_string())?;
+            .open(file_path)
+            .map_err(|e| e.to_string())?;
+        f.set_len(accessible_size as u64)
+            .map_err(|e| e.to_string())?;
 
-        println!("Mmap: accessible_reserved - mapping size {}, accessible size {}", mapping_size, accessible_size);
+        println!(
+            "Mmap: accessible_reserved - mapping size {}, accessible size {}",
+            mapping_size, accessible_size
+        );
         Ok(if accessible_size == mapping_size {
             // Allocate a single read-write region at once.
             let ptr = unsafe {
@@ -110,8 +119,12 @@ impl Mmap {
                     ptr::null_mut(),
                     mapping_size,
                     libc::PROT_NONE,
-                    if path.is_some() { libc::MAP_SHARED } else {libc::MAP_PRIVATE | libc::MAP_ANON},
-                    if path.is_some(){ f.as_raw_fd() } else { -1 },
+                    if path.is_some() {
+                        libc::MAP_SHARED
+                    } else {
+                        libc::MAP_PRIVATE | libc::MAP_ANON
+                    },
+                    if path.is_some() { f.as_raw_fd() } else { -1 },
                     0,
                 )
             };
