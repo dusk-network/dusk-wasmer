@@ -113,7 +113,7 @@ impl Tunables for BaseTunables {
         ty: &MemoryType,
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
-        path: &Path,
+        path: Option<&Path>,
     ) -> Result<Arc<dyn Memory>, MemoryError> {
         Ok(Arc::new(LinearMemory::from_definition(
             ty,

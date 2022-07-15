@@ -280,7 +280,7 @@ impl Module {
     ) -> Result<InstanceHandle, InstantiationError> {
         unsafe {
             let path = self.store.path();
-            let should_initialize_memories= !path.exists();
+            let should_initialize_memories = !path.map(|p|p.exists()).unwrap_or(false);
             let instance_handle = self.artifact.instantiate(
                 self.store.tunables(),
                 resolver,

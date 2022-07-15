@@ -59,7 +59,7 @@ pub trait Artifact: Send + Sync + Upcastable + MemoryUsage + ArtifactCreate {
         tunables: &dyn Tunables,
         resolver: &dyn Resolver,
         host_state: Box<dyn Any>,
-        path: &Path,
+        path: Option<&Path>,
     ) -> Result<InstanceHandle, InstantiationError> {
         // Validate the CPU features this module was compiled with against the
         // host CPU features.

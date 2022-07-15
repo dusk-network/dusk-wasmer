@@ -38,7 +38,7 @@ pub trait Tunables: MemoryUsage {
         ty: &MemoryType,
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
-        path: &Path,
+        path: Option<&Path>,
     ) -> Result<Arc<dyn Memory>, MemoryError>;
 
     /// Create a table owned by the host given a [`TableType`] and a [`TableStyle`].
@@ -70,7 +70,7 @@ pub trait Tunables: MemoryUsage {
         module: &ModuleInfo,
         memory_styles: &PrimaryMap<MemoryIndex, MemoryStyle>,
         memory_definition_locations: &[NonNull<VMMemoryDefinition>],
-        path: &Path,
+        path: Option<&Path>,
     ) -> Result<PrimaryMap<LocalMemoryIndex, Arc<dyn Memory>>, LinkError> {
         let num_imports = module.num_imported_memories;
         let mut memories: PrimaryMap<LocalMemoryIndex, _> =

@@ -161,9 +161,9 @@ impl LinearMemory {
         memory: &MemoryType,
         style: &MemoryStyle,
         vm_memory_location: NonNull<VMMemoryDefinition>,
-        path: &Path,
+        path: Option<&Path>,
     ) -> Result<Self, MemoryError> {
-        Self::new_internal(memory, style, Some(vm_memory_location), Some(path))
+        Self::new_internal(memory, style, Some(vm_memory_location), path)
     }
 
     /// Build a `LinearMemory` with either self-owned or VM owned metadata.

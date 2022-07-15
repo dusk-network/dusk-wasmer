@@ -24,7 +24,7 @@ pub struct Store {
     tunables: Arc<dyn Tunables + Send + Sync>,
     #[loupe(skip)]
     trap_handler: Arc<RwLock<Option<Box<TrapHandlerFn>>>>,
-    path: PathBuf
+    path: Option<PathBuf>,
 }
 
 impl Store {
@@ -33,13 +33,13 @@ impl Store {
     where
         E: Engine + ?Sized,
     {
-        Self::new_with_tunables(engine, BaseTunables::for_target(engine.target()), PathBuf::new().as_path())
+        Self::new_with_tunables(engine, BaseTunables::for_target(engine.target()), None)
     }
 
     /// Creates a new store with a specific path
     pub fn new_with_path(path: &Path) -> Self {
         let mut store = Store::default();
-        store.path = path.into();
+        store.path = Some(path.into());
         store
     }
 
@@ -50,7 +50,7 @@ impl Store {
     }
 
     /// Creates a new `Store` with a specific [`Engine`] and [`Tunables`].
-    pub fn new_with_tunables<E>(engine: &E, tunables: impl Tunables + Send + Sync + 'static, path: &Path) -> Self
+    pub fn new_with_tunables<E>(engine: &E, tunables: impl Tunables + Send + Sync + 'static, path: Option<PathBuf>) -> Self
     where
         E: Engine + ?Sized,
     {
@@ -62,7 +62,7 @@ impl Store {
             engine: engine.cloned(),
             tunables: Arc::new(tunables),
             trap_handler: Arc::new(RwLock::new(None)),
-            path: path.into()
+            path
         }
     }
 
@@ -84,8 +84,8 @@ impl Store {
     }
 
     /// Returns store path
-    pub fn path(&self) -> &Path {
-        self.path.as_path()
+    pub fn path(&self) -> Option<&Path> {
+        self.path.as_ref().map(|p|p.as_path())
     }
 }
 
@@ -150,7 +150,7 @@ impl Default for Store {
         let config = get_config();
         let engine = get_engine(config);
         let tunables = BaseTunables::for_target(engine.target());
-        Self::new_with_tunables(&engine, tunables, PathBuf::new().as_path())
+        Self::new_with_tunables(&engine, tunables, None)
     }
 }
 
