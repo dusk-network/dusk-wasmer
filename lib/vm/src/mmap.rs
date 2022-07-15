@@ -71,21 +71,6 @@ impl Mmap {
             return Ok(Self::new());
         }
 
-        let unused_path = Path::new("/tmp/VM01"); // todo! fix it
-        let file_path = path.unwrap_or(unused_path);
-        match file_path.parent(){
-            Some(p) => std::fs::create_dir_all(p).map_err(|e| e.to_string())?,
-            None => ()
-        }
-        let f = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(!file_path.exists())
-            .open(file_path)
-            .map_err(|e| e.to_string())?;
-        f.set_len(accessible_size as u64)
-            .map_err(|e| e.to_string())?;
-
         Ok(if accessible_size == mapping_size {
             // Allocate a single read-write region at once.
             let ptr = unsafe {
@@ -108,6 +93,21 @@ impl Mmap {
             }
         } else {
             // Reserve the mapping size.
+            let unused_path = Path::new("/tmp/VM01"); // todo! fix it
+            let file_path = path.unwrap_or(unused_path);
+            match file_path.parent(){
+                Some(p) => std::fs::create_dir_all(p).map_err(|e| e.to_string())?,
+                None => ()
+            }
+            let f = OpenOptions::new()
+                .read(true)
+                .write(true)
+                .create(!file_path.exists())
+                .open(file_path)
+                .map_err(|e| e.to_string())?;
+            f.set_len(accessible_size as u64)
+                .map_err(|e| e.to_string())?;
+
             let ptr = unsafe {
                 libc::mmap(
                     ptr::null_mut(),
@@ -117,8 +117,10 @@ impl Mmap {
                         libc::MAP_SHARED
                     } else {
                         libc::MAP_PRIVATE | libc::MAP_ANON
-                    },
+                    }
+                    ,
                     if path.is_some() { f.as_raw_fd() } else { -1 },
+                    // -1,
                     0,
                 )
             };
