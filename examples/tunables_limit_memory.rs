@@ -108,7 +108,7 @@ impl<T: Tunables> Tunables for LimitingTunables<T> {
         let adjusted = self.adjust_memory(ty);
         self.validate_memory(&adjusted)?;
         self.base
-            .create_vm_memory(&adjusted, style, vm_definition_location, PathBuf::new().as_path())
+            .create_vm_memory(&adjusted, style, vm_definition_location, path)
     }
 
     /// Create a table owned by the host given a [`TableType`] and a [`TableStyle`].
@@ -154,7 +154,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tunables = LimitingTunables::new(base, Pages(24));
 
     // Create a store, that holds the engine and our custom tunables
-    let store = Store::new_with_tunables(&engine, tunables);
+    let store = Store::new_with_tunables(&engine, tunables, PathBuf::new().as_path());
 
     println!("Compiling module...");
     let module = Module::new(&store, wasm_bytes)?;

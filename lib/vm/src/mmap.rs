@@ -10,7 +10,7 @@ use more_asserts::assert_lt;
 use std::fs::OpenOptions;
 use std::io;
 use std::os::unix::io::AsRawFd;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::ptr;
 use std::slice;
 
@@ -93,29 +93,44 @@ impl Mmap {
             }
         } else {
             // Reserve the mapping size.
-            let file_path = path.expect("missing path for Wasmer mmap backing file");
-            if let Some(p) = file_path.parent(){
-                std::fs::create_dir_all(p).map_err(|e| e.to_string())?;
-            }
-            let file = OpenOptions::new()
-                .read(true)
-                .write(true)
-                .create(!file_path.exists())
-                .open(file_path)
-                .map_err(|e| e.to_string())?;
-            file.set_len(accessible_size as u64)
-                .map_err(|e| e.to_string())?;
+            let empty_path = PathBuf::from("");
+            let mut file_path = path.unwrap_or(empty_path.as_path());
+            let ptr: *mut std::ffi::c_void;
+            if !file_path.to_str().unwrap_or("").is_empty() {
+                if let Some(p) = file_path.parent(){
+                    std::fs::create_dir_all(p).map_err(|e| e.to_string())?;
+                }
+                let file = OpenOptions::new()
+                    .read(true)
+                    .write(true)
+                    .create(!file_path.exists())
+                    .open(file_path)
+                    .map_err(|e| e.to_string())?;
+                file.set_len(accessible_size as u64)
+                    .map_err(|e| e.to_string())?;
 
-            let ptr = unsafe {
-                libc::mmap(
-                    ptr::null_mut(),
-                    mapping_size,
-                    libc::PROT_NONE,
-                    libc::MAP_SHARED, // libc::MAP_PRIVATE | libc::MAP_ANON
-                    file.as_raw_fd(), // -1
-                    0,
-                )
-            };
+                ptr = unsafe {
+                    libc::mmap(
+                        ptr::null_mut(),
+                        mapping_size,
+                        libc::PROT_NONE,
+                        libc::MAP_SHARED, // libc::MAP_PRIVATE | libc::MAP_ANON
+                        file.as_raw_fd(), // -1
+                        0,
+                    )
+                };
+            } else {
+                ptr = unsafe {
+                    libc::mmap(
+                        ptr::null_mut(),
+                        mapping_size,
+                        libc::PROT_NONE,
+                        libc::MAP_PRIVATE | libc::MAP_ANON,
+                        -1,
+                        0,
+                    )
+                };
+            }
             if ptr as isize == -1_isize {
                 return Err(io::Error::last_os_error().to_string());
             }
