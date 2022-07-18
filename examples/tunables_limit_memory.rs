@@ -1,6 +1,6 @@
 use std::ptr::NonNull;
 use std::sync::Arc;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use loupe::MemoryUsage;
 use wasmer::{
@@ -103,7 +103,7 @@ impl<T: Tunables> Tunables for LimitingTunables<T> {
         ty: &MemoryType,
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
-        path: &Path
+        path: Option<&Path>
     ) -> Result<Arc<dyn vm::Memory>, MemoryError> {
         let adjusted = self.adjust_memory(ty);
         self.validate_memory(&adjusted)?;
@@ -154,7 +154,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tunables = LimitingTunables::new(base, Pages(24));
 
     // Create a store, that holds the engine and our custom tunables
-    let store = Store::new_with_tunables(&engine, tunables, PathBuf::new().as_path());
+    let store = Store::new_with_tunables(&engine, tunables, None);
 
     println!("Compiling module...");
     let module = Module::new(&store, wasm_bytes)?;
