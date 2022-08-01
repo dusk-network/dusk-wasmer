@@ -2,6 +2,7 @@ use crate::sys::{MemoryType, Pages, TableType};
 use loupe::MemoryUsage;
 use std::ptr::NonNull;
 use std::sync::Arc;
+use std::path::Path;
 use target_lexicon::PointerWidth;
 use wasmer_compiler::Target;
 use wasmer_engine::Tunables;
@@ -112,11 +113,13 @@ impl Tunables for BaseTunables {
         ty: &MemoryType,
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
+        path: Option<&Path>,
     ) -> Result<Arc<dyn Memory>, MemoryError> {
         Ok(Arc::new(LinearMemory::from_definition(
             ty,
             style,
             vm_definition_location,
+            path
         )?))
     }
 

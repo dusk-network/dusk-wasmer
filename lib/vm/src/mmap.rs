@@ -7,7 +7,10 @@
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use more_asserts::assert_le;
 use more_asserts::assert_lt;
+use std::fs::{File, OpenOptions};
 use std::io;
+use std::os::unix::io::AsRawFd;
+use std::path::Path;
 use std::ptr;
 use std::slice;
 
@@ -26,6 +29,7 @@ pub struct Mmap {
     // the coordination all happens at the OS layer.
     ptr: usize,
     len: usize,
+    file_opt: Option<File>,
 }
 
 impl Mmap {
@@ -38,6 +42,7 @@ impl Mmap {
         Self {
             ptr: empty.as_ptr() as usize,
             len: 0,
+            file_opt: None
         }
     }
 
@@ -45,7 +50,7 @@ impl Mmap {
     pub fn with_at_least(size: usize) -> Result<Self, String> {
         let page_size = region::page::size();
         let rounded_size = round_up_to_page_size(size, page_size);
-        Self::accessible_reserved(rounded_size, rounded_size)
+        Self::accessible_reserved(rounded_size, rounded_size, None)
     }
 
     /// Create a new `Mmap` pointing to `accessible_size` bytes of page-aligned accessible memory,
@@ -55,6 +60,7 @@ impl Mmap {
     pub fn accessible_reserved(
         accessible_size: usize,
         mapping_size: usize,
+        path: Option<&Path>,
     ) -> Result<Self, String> {
         let page_size = region::page::size();
         assert_le!(accessible_size, mapping_size);
@@ -86,18 +92,52 @@ impl Mmap {
             Self {
                 ptr: ptr as usize,
                 len: mapping_size,
+                file_opt: None,
             }
         } else {
             // Reserve the mapping size.
-            let ptr = unsafe {
-                libc::mmap(
-                    ptr::null_mut(),
-                    mapping_size,
-                    libc::PROT_NONE,
-                    libc::MAP_PRIVATE | libc::MAP_ANON,
-                    -1,
-                    0,
-                )
+            let ptr: *mut std::ffi::c_void;
+            let file_opt = match path {
+                Some(file_path) => {
+                    if let Some(p) = file_path.parent() {
+                        std::fs::create_dir_all(p).map_err(|e| e.to_string())?;
+                    }
+                    let file_path_exists = file_path.exists();
+                    let file = OpenOptions::new()
+                        .read(true)
+                        .write(true)
+                        .create(!file_path_exists)
+                        .open(file_path)
+                        .map_err(|e| e.to_string())?;
+                    if !file_path_exists {
+                        file.set_len(accessible_size as u64)
+                            .map_err(|e| e.to_string())?;
+                    };
+                    ptr = unsafe {
+                        libc::mmap(
+                            ptr::null_mut(),
+                            mapping_size,
+                            libc::PROT_NONE,
+                            libc::MAP_SHARED,
+                            file.as_raw_fd(),
+                            0,
+                        )
+                    };
+                    Some(file)
+                },
+                None => {
+                    ptr = unsafe {
+                        libc::mmap(
+                            ptr::null_mut(),
+                            mapping_size,
+                            libc::PROT_NONE,
+                            libc::MAP_PRIVATE | libc::MAP_ANON,
+                            -1,
+                            0,
+                        )
+                    };
+                    None
+                }
             };
             if ptr as isize == -1_isize {
                 return Err(io::Error::last_os_error().to_string());
@@ -106,6 +146,7 @@ impl Mmap {
             let mut result = Self {
                 ptr: ptr as usize,
                 len: mapping_size,
+                file_opt
             };
 
             if accessible_size != 0 {
@@ -190,6 +231,12 @@ impl Mmap {
         assert_lt!(len, self.len);
         assert_lt!(start, self.len - len);
 
+        if let Some(file) = &self.file_opt {
+            if start > 0 {
+                let new_len = (start + len) as u64;
+                file.set_len(new_len).map_err(|e| e.to_string())?;
+            }
+        }
         // Commit the accessible size.
         let ptr = self.ptr as *const u8;
         unsafe { region::protect(ptr.add(start), len, region::Protection::READ_WRITE) }

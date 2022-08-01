@@ -1020,12 +1020,16 @@ impl InstanceHandle {
         &self,
         trap_handler: &(dyn TrapHandler + 'static),
         data_initializers: &[DataInitializer<'_>],
+        should_initialize_memories: bool,
     ) -> Result<(), Trap> {
         let instance = self.instance().as_ref();
 
         // Apply the initializers.
         initialize_tables(instance)?;
-        initialize_memories(instance, data_initializers)?;
+
+        if should_initialize_memories {
+            initialize_memories(instance, data_initializers)?;
+        }
 
         // The WebAssembly spec specifies that the start function is
         // invoked automatically at instantiation time.

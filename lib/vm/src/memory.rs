@@ -15,6 +15,7 @@ use std::convert::TryInto;
 use std::fmt;
 use std::ptr::NonNull;
 use std::sync::Mutex;
+use std::path::Path;
 use thiserror::Error;
 use wasmer_types::{Bytes, MemoryStyle, MemoryType, Pages};
 
@@ -146,7 +147,7 @@ impl LinearMemory {
     /// This creates a `LinearMemory` with owned metadata: this can be used to create a memory
     /// that will be imported into Wasm modules.
     pub fn new(memory: &MemoryType, style: &MemoryStyle) -> Result<Self, MemoryError> {
-        unsafe { Self::new_internal(memory, style, None) }
+        unsafe { Self::new_internal(memory, style, None, None) }
     }
 
     /// Create a new linear memory instance with specified minimum and maximum number of wasm pages.
@@ -160,8 +161,9 @@ impl LinearMemory {
         memory: &MemoryType,
         style: &MemoryStyle,
         vm_memory_location: NonNull<VMMemoryDefinition>,
+        path: Option<&Path>,
     ) -> Result<Self, MemoryError> {
-        Self::new_internal(memory, style, Some(vm_memory_location))
+        Self::new_internal(memory, style, Some(vm_memory_location), path)
     }
 
     /// Build a `LinearMemory` with either self-owned or VM owned metadata.
@@ -169,6 +171,7 @@ impl LinearMemory {
         memory: &MemoryType,
         style: &MemoryStyle,
         vm_memory_location: Option<NonNull<VMMemoryDefinition>>,
+        path: Option<&Path>,
     ) -> Result<Self, MemoryError> {
         if memory.minimum > Pages::max_value() {
             return Err(MemoryError::MinimumMemoryTooLarge {
@@ -218,7 +221,7 @@ impl LinearMemory {
         let mapped_bytes = mapped_pages.bytes();
 
         let mut mmap = WasmMmap {
-            alloc: Mmap::accessible_reserved(mapped_bytes.0, request_bytes)
+            alloc: Mmap::accessible_reserved(mapped_bytes.0, request_bytes, path)
                 .map_err(MemoryError::Region)?,
             size: memory.minimum,
         };
@@ -349,7 +352,7 @@ impl Memory for LinearMemory {
                     })?;
 
             let mut new_mmap =
-                Mmap::accessible_reserved(new_bytes, request_bytes).map_err(MemoryError::Region)?;
+                Mmap::accessible_reserved(new_bytes, request_bytes, None).map_err(MemoryError::Region)?;
 
             let copy_len = mmap.alloc.len() - self.offset_guard_size;
             new_mmap.as_mut_slice()[..copy_len].copy_from_slice(&mmap.alloc.as_slice()[..copy_len]);

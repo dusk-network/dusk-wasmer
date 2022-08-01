@@ -2,6 +2,7 @@ use crate::sys::tunables::BaseTunables;
 use loupe::MemoryUsage;
 use std::fmt;
 use std::sync::{Arc, RwLock};
+use std::path::{Path, PathBuf};
 #[cfg(all(feature = "compiler", feature = "engine"))]
 use wasmer_compiler::CompilerConfig;
 use wasmer_engine::{Engine, Tunables};
@@ -23,6 +24,7 @@ pub struct Store {
     tunables: Arc<dyn Tunables + Send + Sync>,
     #[loupe(skip)]
     trap_handler: Arc<RwLock<Option<Box<TrapHandlerFn>>>>,
+    path: Option<PathBuf>,
 }
 
 impl Store {
@@ -32,6 +34,16 @@ impl Store {
         E: Engine + ?Sized,
     {
         Self::new_with_tunables(engine, BaseTunables::for_target(engine.target()))
+    }
+
+    /// Creates a new store with a specific path
+    pub fn new_with_path<P>(path: P) -> Self
+    where
+        P: AsRef<Path>
+    {
+        let mut store = Store::default();
+        store.path = Some(path.as_ref().to_path_buf());
+        store
     }
 
     /// Set the trap handler in this store.
@@ -53,6 +65,18 @@ impl Store {
             engine: engine.cloned(),
             tunables: Arc::new(tunables),
             trap_handler: Arc::new(RwLock::new(None)),
+            path: None,
+        }
+    }
+
+    /// Creates a new `Store` with a specific [`Engine`], [`Tunables`] and [`Path`].
+    pub fn new_with_tunables_and_path<E>(engine: &E, tunables: impl Tunables + Send + Sync + 'static, path: PathBuf) -> Self
+    where
+        E: Engine + ?Sized,
+    {
+        Self {
+            path: Some(path),
+            ..Store::new_with_tunables(engine, tunables)
         }
     }
 
@@ -71,6 +95,11 @@ impl Store {
     /// tunables are excluded from the logic.
     pub fn same(a: &Self, b: &Self) -> bool {
         a.engine.id() == b.engine.id()
+    }
+
+    /// Returns store path
+    pub fn path(&self) -> Option<&Path> {
+        self.path.as_ref().map(|p|p.as_path())
     }
 }
 
