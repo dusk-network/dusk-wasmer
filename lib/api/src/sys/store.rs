@@ -37,9 +37,12 @@ impl Store {
     }
 
     /// Creates a new store with a specific path
-    pub fn new_with_path(path: &Path) -> Self {
+    pub fn new_with_path<P>(path: P) -> Self
+    where
+        P: AsRef<Path>
+    {
         let mut store = Store::default();
-        store.path = Some(path.into());
+        store.path = Some(path.as_ref().to_path_buf());
         store
     }
 
