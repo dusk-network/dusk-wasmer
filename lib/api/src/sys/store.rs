@@ -33,7 +33,7 @@ impl Store {
     where
         E: Engine + ?Sized,
     {
-        Self::new_with_tunables(engine, BaseTunables::for_target(engine.target()), None)
+        Self::new_with_tunables(engine, BaseTunables::for_target(engine.target()))
     }
 
     /// Creates a new store with a specific path
@@ -50,7 +50,7 @@ impl Store {
     }
 
     /// Creates a new `Store` with a specific [`Engine`] and [`Tunables`].
-    pub fn new_with_tunables<E>(engine: &E, tunables: impl Tunables + Send + Sync + 'static, path: Option<PathBuf>) -> Self
+    pub fn new_with_tunables<E>(engine: &E, tunables: impl Tunables + Send + Sync + 'static) -> Self
     where
         E: Engine + ?Sized,
     {
@@ -62,7 +62,18 @@ impl Store {
             engine: engine.cloned(),
             tunables: Arc::new(tunables),
             trap_handler: Arc::new(RwLock::new(None)),
-            path
+            path: None,
+        }
+    }
+
+    /// Creates a new `Store` with a specific [`Engine`], [`Tunables`] and [`Path`].
+    pub fn new_with_tunables_and_path<E>(engine: &E, tunables: impl Tunables + Send + Sync + 'static, path: PathBuf) -> Self
+    where
+        E: Engine + ?Sized,
+    {
+        Self {
+            path: Some(path),
+            ..Store::new_with_tunables(engine, tunables)
         }
     }
 
@@ -150,7 +161,7 @@ impl Default for Store {
         let config = get_config();
         let engine = get_engine(config);
         let tunables = BaseTunables::for_target(engine.target());
-        Self::new_with_tunables(&engine, tunables, None)
+        Self::new_with_tunables(&engine, tunables)
     }
 }
 

@@ -278,9 +278,9 @@ impl Module {
         &self,
         resolver: &dyn Resolver,
     ) -> Result<InstanceHandle, InstantiationError> {
+        let path = self.store.path();
+        let should_initialize_memories = !path.map(|p|p.exists()).unwrap_or(false);
         unsafe {
-            let path = self.store.path();
-            let should_initialize_memories = !path.map(|p|p.exists()).unwrap_or(false);
             let instance_handle = self.artifact.instantiate(
                 self.store.tunables(),
                 resolver,
