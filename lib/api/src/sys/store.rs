@@ -70,12 +70,13 @@ impl Store {
     }
 
     /// Creates a new `Store` with a specific [`Engine`], [`Tunables`] and [`Path`].
-    pub fn new_with_tunables_and_path<E>(engine: &E, tunables: impl Tunables + Send + Sync + 'static, path: PathBuf) -> Self
+    pub fn new_with_tunables_and_path<E,P>(engine: &E, tunables: impl Tunables + Send + Sync + 'static, path: P) -> Self
     where
         E: Engine + ?Sized,
+        P: AsRef<Path>,
     {
         Self {
-            path: Some(path),
+            path: Some(path.as_ref().to_path_buf()),
             ..Store::new_with_tunables(engine, tunables)
         }
     }
